@@ -1,6 +1,6 @@
 ![Status](https://img.shields.io/badge/Status-Work%20in%20Progress-yellow)
 
-# 🏙️ Smart Egyptian Real Estate Advisor
+# 🏠 Aqar AI (Smart Egyptian Real Estate Advisor)
 
 A sophisticated RAG (Retrieval-Augmented Generation) application designed to act as an intelligent, human-like real estate consultant for the Egyptian market.
 
@@ -21,7 +21,7 @@ A sophisticated RAG (Retrieval-Augmented Generation) application designed to act
 
 ### Prerequisites
 
--   Python 3.9 or higher.
+-   Python 3.9+ (Note: For **GPU/CUDA** support, use Python 3.10 - 3.12. Python 3.13 currently supports CPU-only).
 -   A [HuggingFace API Token](https://huggingface.co/settings/tokens) (Required for logic).
 -   A [Groq API Key](https://console.groq.com/keys) (Recommended for speed/quality).
 
