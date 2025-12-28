@@ -1,3 +1,5 @@
+![Status](https://img.shields.io/badge/Status-Work%20in%20Progress-yellow)
+
 # 🏙️ Smart Egyptian Real Estate Advisor
 
 A sophisticated RAG (Retrieval-Augmented Generation) application designed to act as an intelligent, human-like real estate consultant for the Egyptian market.
@@ -27,7 +29,7 @@ A sophisticated RAG (Retrieval-Augmented Generation) application designed to act
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/yourusername/egypt-real-estate-ai.git
+    git clone https://github.com/eiadnouman/egypt-real-estate-ai.git
     cd egypt-real-estate-ai
     ```
 
