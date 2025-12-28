@@ -1,3 +1,5 @@
+![Status](https://img.shields.io/badge/Status-Work%20in%20Progress-yellow)
+
 # 🏙️ Smart Egyptian Real Estate Advisor
 
 A sophisticated RAG (Retrieval-Augmented Generation) application designed to act as an intelligent, human-like real estate consultant for the Egyptian market.
