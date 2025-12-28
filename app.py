@@ -12,8 +12,8 @@ load_dotenv()
 
 # --- Page Config ---
 st.set_page_config(
-    page_title="Edge Estate AI", 
-    page_icon="🏢", 
+    page_title="Aqar AI", 
+    page_icon="🏠", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -74,8 +74,8 @@ def get_engine():
 def main():
     # 1. Sidebar
     with st.sidebar:
-        st.title("🏢 Edge Estate AI")
-        st.caption("Smart Real Estate Consultant")
+        st.title("🏠 Aqar AI")
+        st.caption("مستشارك العقاري الذكي")
         st.markdown("---")
         
         # Engine Stats
@@ -97,7 +97,7 @@ def main():
             st.rerun()
 
     # 2. Chat Interface Setup
-    st.title("Welcome to Edge Estate 🇪🇬")
+    st.title("أهلاً بيك في Aqar 🇪🇬")
     
     # Initialize Chat History
     if "messages" not in st.session_state:
@@ -105,7 +105,7 @@ def main():
         # Initial greeting
         st.session_state.messages.append({
             "role": "assistant",
-            "content": "أهلاً بيك يا فندم! 👋\nأنا Edge، مستشارك العقاري الشخصي.\nبتدور على إيه النهاردة؟ (شقة، فيلا، مكان معين، ميزانية؟)"
+            "content": "أهلاً يا فندم! 👋\nأنا Aqar، معاك عشان نلاقي أنسب بيت ليك.\nتحب ندور فين النهاردة؟ ولا عندك مواصفات معينة في بالك؟"
         })
 
     # 3. Display Chat History
