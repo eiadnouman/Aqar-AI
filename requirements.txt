@@ -1,13 +1,7 @@
-langchain
-langchain-community
-langchain-core
-langchain-ollama
-langchain-huggingface
-sentence-transformers
-faiss-cpu
 streamlit
-faker
 python-dotenv
-watchdog
-
+langchain-huggingface
+langchain-community
 langchain-groq
+faiss-cpu
+sentence-transformers

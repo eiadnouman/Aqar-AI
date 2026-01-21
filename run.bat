@@ -1,4 +1,4 @@
 @echo off
 call venv\Scripts\activate
-streamlit run app.py
+streamlit run src\app.py
 pause
