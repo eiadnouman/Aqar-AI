@@ -369,9 +369,26 @@ class RealEstateRAG:
                 
         elif len(filtered_docs) < 5:
              # We found SOME exact matches, but let's pad it with semantic matches just in case
-             search_status = "تطابق جزئي: وجدنا عدد قليل من العقارات المطابقة. سيتم عرضها مع بعض البدائل الأخرى."
+             search_status = "تطابق جزئي: وجدنا عدد قليل من العقارات المطابقة. سيتم عرضها مع بعض البدائل الأخرى في نفس المنطقة أو بأقرب تفاصيل."
              existing_urls = {d.metadata.get('url') for d in filtered_docs}
-             for doc in raw_docs:
+             
+             # Safest way to get the base location constraint is via our location map
+             base_loc_fallback = self._get_location_from_query(query)
+             requested_loc = filters.get('location')
+             
+             padding_pool = []
+             
+             # 1. Prioritize ANY property in the same location
+             for d in raw_docs:
+                 d_loc = d.metadata.get('location', '').lower()
+                 if (base_loc_fallback and base_loc_fallback.lower() in d_loc) or (requested_loc and requested_loc.lower() in d_loc):
+                     padding_pool.append(d)
+                     
+             # 2. Only if we STILL don't have enough, we allow other locations (fallback semantic)
+             if len(padding_pool) < 5:
+                 padding_pool.extend([d for d in raw_docs if d not in padding_pool])
+             
+             for doc in padding_pool:
                  if len(filtered_docs) >= 5: break
                  if doc.metadata.get('url') not in existing_urls:
                      filtered_docs.append(doc)
