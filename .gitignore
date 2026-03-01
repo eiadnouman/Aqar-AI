@@ -13,6 +13,7 @@ env/
 # Data & Models (Do not upload large files except the index)
 *.csv
 *.pkl
+!index.pkl
 
 # IDE
 .vscode/
