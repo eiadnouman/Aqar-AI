@@ -1,7 +1,12 @@
-streamlit
-python-dotenv
-langchain-huggingface
+faiss-cpu
+fastapi
+groq
+langchain
 langchain-community
 langchain-groq
-faiss-cpu
+langchain-huggingface
+pydantic
+python-dotenv
 sentence-transformers
+streamlit
+uvicorn
