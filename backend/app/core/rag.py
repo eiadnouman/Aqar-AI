@@ -31,10 +31,10 @@ class RealEstateRAG:
     Handles data indexing, retrieval, and LLM generation.
     """
 
-    # Updated __init__ to include sessions
     def __init__(self, index_path: str = "data/faiss_index_cloud"):
-        # Resolve path relative to this file (backend/app/core/rag.py) -> ../../../data
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        # Use an robust path resolution strategy for production
+        # In Railway, the app runs from the root directory (/app)
+        base_dir = os.path.abspath(os.getcwd())
         default_path = os.path.join(base_dir, "data", "faiss_index_cloud")
         self.index_path = os.getenv("FAISS_INDEX_PATH", default_path)
         self.hf_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
@@ -55,6 +55,7 @@ class RealEstateRAG:
         
         self.available_locations = set()
         self.sessions = {} # Session Filter Memory
+        self.vectorstore = None
 
         # 3. Load Vector Store
         self._load_index()
