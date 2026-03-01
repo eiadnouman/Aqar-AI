@@ -347,14 +347,23 @@ class RealEstateRAG:
         filtered_docs = self._apply_filters(raw_docs, filters)
         
         # Handle "No Result" with Fallback
-        msg_prefix = ""
+        search_status = "تطابق ممتاز: وجدنا عقارات مطابقة لطلب العميل في الداتا بيز المتاحة."
+        
         # If the user provided ANY meaningful filter, and we got 0 matches:
         has_active_filters = any(v is not None and v != '' and v != 0 for v in filters.values())
         
         if not filtered_docs and has_active_filters:
             logger.warning("No properties matched strict filters. Showing closest vector matches.")
-            msg_prefix = "عذراً ملقتش عقارات مطابقة تماماً لطلبك دي، بس دي أقرب متاح:\n\n"
+            # Determine if it's a location issue vs budget issue
+            requested_loc = filters.get('location')
+            if requested_loc and not any(requested_loc.lower() in d.metadata.get('location', '').lower() for d in raw_docs):
+                 search_status = f"تنبيه هام جداً: العميل طلب مكان أو محافظة ({requested_loc}) وهي غير موجودة تماماً في الداتا بيز حالياً. العقارات المعروضة هي في مناطق أخرى (بدائل)."
+            else:
+                 search_status = "تنبيه هام جداً: العميل طلب مواصفات (زي السعر أو عدد الغرف) غير متطابقة حرفياً مع المتاح. العقارات المعروضة هي أقرب بدائل متاحة."
+                 
             filtered_docs = self._filter_by_location(query, raw_docs)[:5]
+            if not filtered_docs:
+                filtered_docs = raw_docs[:5]
         elif not filtered_docs:
             filtered_docs = raw_docs[:5] # General question, just return top matches
         else:
@@ -364,36 +373,35 @@ class RealEstateRAG:
 
         # 4. Construct Prompt
         template = """
-        انت "AqarAI"، مستشار عقاري خبير (مش مجرد بوت).
-        هدفك تفهم احتياج العميل كويس جداً وتقترح عليه الأنسب، مش بس تعرض داتا وخلاص.
+        انت "AqarAI"، مستشار عقاري ذكي وصريح جداً وعملي.
+        مهمتك الرد المباشر السريع بدون إطالة أو أسئلة غير ضرورية.
 
-        البيانات المتاحة (العقارات اللي لقيتها بناءً على كلامه):
+        [حالة البحث الفعلي في قاعدة البيانات]: 
+        {search_status}
+
+        [العقارات المتاحة لتعرضها على العميل]:
         {context}
 
         رسالة العميل: 
         {question}
 
-        تعليمات الرد (مهمة جداً):
-        1. **شخصيتك**: اتكلم عامية مصرية شيك (Formal Friendly). حسس العميل انك فاهم في السوق.
-        2. **لو العميل بيسأل عامة**: اسأله أسئلة توضيحية الأول.
-        3. **لو العميل طلب يشوف صور/عقارات، أو لو انت لقيت داتا قوية ومناسبة في "البيانات المتاحة"**: اعرض عليه ملخص سريع جداً ليها.
-        4. **لو البيانات المتاحة فيها عقارات**: إياك أن تقول للعميل "لم أجد عقارات" أو "لا يوجد". بل اعرض ما لديك.
-        5. **إظهار العقارات**:
-           - **يجب** وضع كلمة `[SHOW_CARDS]` في نهاية ردك تماماً إذا كان هناك عقارات متاحة في البيانات وقررت عرضها للعميل. لا تنسى هذه الكلمة أبداً إذا كانت هناك بيانات.
-        
-        مثال للرد (استكشاف):
-        "أهلاً بحضرتك. عندنا مجموعة مميزة من العقارات في مناطق زي التجمع، زايد، والساحل. عشان أقدر أفيدك، حضرتك حاطط ميزانية معينة مبدئياً؟"
-
-        مثال للرد (عرض):
-        "بناءً على طلبك، لقيت 3 شقق لقطة مناسبة للميزانية دي. الأولى مساحتها 160م. تحب نبص على التفاصيل؟
-        [SHOW_CARDS]"
+        تعليمات الرد (أهم جزء في النظام - التزم بها حرفياً):
+        1. **المصارحة الفورية**: إذا كانت [حالة البحث] تفيد بعدم وجود العقار (مثلاً محافظة غير مدعومة أو ميزانية غير منطقية)، إياك أن تسأل أسئلة مثل "محتاج كام غرفة؟" أو "تحب أدورلك فين؟". قل فوراً بوضوح شديد: "للأسف مفيش حالياً عقارات بالظبط زي اللي طلبتها بالحرف، لكن دي أفضل بدائل قريبة من طلبك متاحين عندي:" 
+        2. **لا تسأل**: ممنوع توجيه أي أسئلة للعميل إذا لم تجد طلبه. فقط اعرض البدائل واختم كلامك.
+        3. **أسلوب الرد**: عامية مصرية شيك واثقة، ومباشرة. لخص العقارات بشكل جذاب وسريع.
+        4. **إظهار العقارات**:
+           - **يجب** وضع كلمة `[SHOW_CARDS]` في سطر مستقل في نهاية ردك تماماً لكي يتمكن النظام من عرض صور العقارات للعميل. لا تنسى هذه الكلمة أبداً.
         
         ردك:
         """
         
         prompt = ChatPromptTemplate.from_template(template)
         chain = (
-            {"context": lambda x: self._format_docs_to_string(final_docs), "question": RunnablePassthrough()}
+            {
+                "context": lambda x: self._format_docs_to_string(final_docs), 
+                "question": RunnablePassthrough(),
+                "search_status": lambda x: search_status
+            }
             | prompt
             | self.llm
         )
@@ -403,10 +411,6 @@ class RealEstateRAG:
             response = chain.invoke(query)
             # Handle different return types from LangChain integrations
             content = response.content if hasattr(response, 'content') else str(response)
-            
-            # Prepend fallback message if needed
-            if msg_prefix:
-                content = msg_prefix + content
 
             # Clean output
             show_cards = "[SHOW_CARDS]" in content or "SHOW_CARDS" in content
@@ -427,15 +431,17 @@ class RealEstateRAG:
                 try:
                     fallback_llm = self._init_hf_fallback()
                     fallback_chain = (
-                        {"context": lambda x: self._format_docs_to_string(final_docs), "question": RunnablePassthrough()}
+                        {
+                            "context": lambda x: self._format_docs_to_string(final_docs), 
+                            "question": RunnablePassthrough(),
+                            "search_status": lambda x: search_status
+                        }
                         | prompt
                         | fallback_llm
                     )
                     # For HuggingFaceEndpoint, invoke usually returns a string directly
                     response = fallback_chain.invoke(query)
                     content = response if isinstance(response, str) else (response.content if hasattr(response, 'content') else str(response))
-                    if msg_prefix:
-                        content = msg_prefix + content
                     show_cards = "[SHOW_CARDS]" in content or "SHOW_CARDS" in content
                     content_clean = content.replace("[SHOW_CARDS]", "").replace("SHOW_CARDS", "").strip()
                     if final_docs and ("شقة" in query or "فيلا" in query or "عقار" in query or "تجمع" in query or "زايد" in query):
@@ -617,7 +623,9 @@ class RealEstateRAG:
             "عاصمة": "New Capital", "مستقبل": "Mostakbal",
             "شروق": "Shorouk", "رحاب": "Rehab", "مدينتي": "Madinaty",
             "معادي": "Maadi", "نصر": "Nasr City", "اسكندرية": "Alexandria",
-            "منصورة": "Mansoura", "عبور": "Obour", "دمياط": "Damietta"
+            "منصورة": "Mansoura", "عبور": "Obour", "دمياط": "Damietta",
+            "بورسعيد": "Port Said", "اسماعيلية": "Ismailia", "سويس": "Suez",
+            "غردقة": "Hurghada", "شرم": "Sharm El Sheikh", "جونا": "El Gouna"
         }
         for Arabic_key, English_val in location_map.items():
             if Arabic_key in query:
