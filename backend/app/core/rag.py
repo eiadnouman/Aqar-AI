@@ -346,26 +346,36 @@ class RealEstateRAG:
         # 3. Apply Filters
         filtered_docs = self._apply_filters(raw_docs, filters)
         
-        # Handle "No Result" with Fallback
-        search_status = "تطابق ممتاز: وجدنا عقارات مطابقة لطلب العميل في الداتا بيز المتاحة."
+        search_status = "تطابق ممتاز: وجدنا عقارات مطابقة لطلب العميل بدقة."
         
-        # If the user provided ANY meaningful filter, and we got 0 matches:
-        has_active_filters = any(v is not None and v != '' and v != 0 for v in filters.values())
-        
-        if not filtered_docs and has_active_filters:
-            logger.warning("No properties matched strict filters. Showing closest vector matches.")
-            # Determine if it's a location issue vs budget issue
+        # Determine if we need to use fallback
+        if len(filtered_docs) == 0:
+            logger.warning("No properties matched strict filters. Showing closest vector matches/location defaults.")
+            
+            # Determine reason for mismatch
             requested_loc = filters.get('location')
             if requested_loc and not any(requested_loc.lower() in d.metadata.get('location', '').lower() for d in raw_docs):
-                 search_status = f"تنبيه هام جداً: العميل طلب مكان أو محافظة ({requested_loc}) وهي غير موجودة تماماً في الداتا بيز حالياً. العقارات المعروضة هي في مناطق أخرى (بدائل)."
+                 search_status = f"تنبيه: العميل طلب مكان ({requested_loc}) غير متوفر حالياً. اعرض البدائل التالية في أماكن أخرى ووضح ذلك بلطف."
             else:
-                 search_status = "تنبيه هام جداً: العميل طلب مواصفات (زي السعر أو عدد الغرف) غير متطابقة حرفياً مع المتاح. العقارات المعروضة هي أقرب بدائل متاحة."
+                 search_status = "تنبيه: لا يوجد توفر بنفس المواصفات المطلوبة تماماً (سعر/غرف/نوع). اعرض البدائل الأقرب التالية."
                  
-            filtered_docs = self._filter_by_location(query, raw_docs)[:5]
+            # Fallback 1: Just Location
+            filtered_docs = self._filter_by_location(query, raw_docs)
             if not filtered_docs:
+                # Fallback 2: Just semantic vectors
                 filtered_docs = raw_docs[:5]
-        elif not filtered_docs:
-            filtered_docs = raw_docs[:5] # General question, just return top matches
+            else:
+                filtered_docs = filtered_docs[:5]
+                
+        elif len(filtered_docs) < 5:
+             # We found SOME exact matches, but let's pad it with semantic matches just in case
+             search_status = "تطابق جزئي: وجدنا عدد قليل من العقارات المطابقة. سيتم عرضها مع بعض البدائل الأخرى."
+             existing_urls = {d.metadata.get('url') for d in filtered_docs}
+             for doc in raw_docs:
+                 if len(filtered_docs) >= 5: break
+                 if doc.metadata.get('url') not in existing_urls:
+                     filtered_docs.append(doc)
+                     existing_urls.add(doc.metadata.get('url'))
         else:
             filtered_docs = filtered_docs[:5]
 
