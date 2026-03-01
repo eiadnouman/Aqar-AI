@@ -10,11 +10,11 @@ venv_win_backup/
 .venv/
 env/
 
-# Data & Models (Do not upload large files)
-faiss_index_cloud/
+# Data & Models (Do not upload large files except the index)
 *.csv
 *.pkl
 
 # IDE
 .vscode/
 .idea/
+data/*.zip

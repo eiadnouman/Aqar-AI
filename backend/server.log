@@ -1,0 +1,61 @@
+nohup: ignoring input
+INFO:     Started server process [65171]
+INFO:     Waiting for application startup.
+2026-03-01 13:33:02,983 - INFO - Startup: Initializing AI Engine...
+2026-03-01 13:33:02,983 - INFO - Initializing Embeddings Engine (Local)...
+2026-03-01 13:33:04,819 - INFO - Use pytorch device_name: cuda:0
+2026-03-01 13:33:04,819 - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-03-01 13:33:09,021 - INFO - Connecting to Groq (Llama 3.3)...
+2026-03-01 13:33:09,180 - INFO - Connected to Groq successfully.
+2026-03-01 13:33:09,181 - INFO - Loading faiss with AVX2 support.
+2026-03-01 13:33:09,208 - INFO - Successfully loaded faiss with AVX2 support.
+2026-03-01 13:33:09,218 - INFO - Vector Database loaded successfully.
+2026-03-01 13:33:09,219 - INFO - Dynamic Locations Found: ['The One, Smouha, Hay Sharq, Alexandria', 'Blanca Gardens, Soma Bay, Safaga, Hurghada, Red Sea', 'Zahya New Mansoura, New Mansoura, Al Daqahlya', '5th District, Obour City, Qalyubia', 'Amwaj, Sidi Abdel Rahman, North Coast']... (Total: 93)
+2026-03-01 13:33:09,219 - INFO - Startup: AI Engine Ready.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:37654 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37658 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43818 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43818 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46960 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57354 - "GET /health HTTP/1.1" 200 OK
+2026-03-01 13:35:52,676 - INFO - Processing Request: هاي (Session: user_streamlit)
+2026-03-01 13:35:53,644 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-01 13:35:53,670 - INFO - LLM Extracted Filters: {'location': None}
+2026-03-01 13:35:53,670 - INFO - New Filters: {'location': None}
+2026-03-01 13:35:53,670 - INFO - Merged Filters (Session user_streamlit): {}
+2026-03-01 13:35:54,739 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:57368 - "POST /v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38656 - "GET /health HTTP/1.1" 200 OK
+2026-03-01 13:36:03,564 - INFO - Processing Request: عاوز شقق في التجمع 3 غرف (Session: user_streamlit)
+2026-03-01 13:36:05,697 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-01 13:36:05,722 - INFO - LLM Extracted Filters: {'location': '5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-03-01 13:36:05,722 - INFO - New Filters: {'location': '5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-03-01 13:36:05,723 - INFO - Merged Filters (Session user_streamlit): {'location': '5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-03-01 13:36:07,128 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:38658 - "POST /v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42654 - "GET /health HTTP/1.1" 200 OK
+2026-03-01 13:39:22,967 - INFO - Processing Request: عندكو شقق ف اماكن ايه (Session: user_streamlit)
+2026-03-01 13:39:23,449 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-01 13:39:23,451 - INFO - LLM Extracted Filters: {'location': None, 'property_type': 'apartment'}
+2026-03-01 13:39:23,451 - INFO - New Filters: {'location': None, 'property_type': 'apartment'}
+2026-03-01 13:39:23,452 - INFO - Merged Filters (Session user_streamlit): {'location': '5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-03-01 13:39:24,090 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:42668 - "POST /v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57720 - "GET /health HTTP/1.1" 200 OK
+2026-03-01 13:39:35,520 - INFO - Processing Request: تقدر تقوللي كل الاماكن اللي عندك؟ (Session: user_streamlit)
+2026-03-01 13:39:36,888 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-01 13:39:36,910 - INFO - LLM Extracted Filters: {'location': None}
+2026-03-01 13:39:36,910 - INFO - New Filters: {'location': None}
+2026-03-01 13:39:36,910 - INFO - Merged Filters (Session user_streamlit): {'location': '5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-03-01 13:39:37,781 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:57736 - "POST /v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44550 - "GET /health HTTP/1.1" 200 OK
+2026-03-01 13:39:50,872 - INFO - Processing Request: فيه فبورسعيد؟ (Session: user_streamlit)
+2026-03-01 13:39:51,279 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-01 13:39:51,290 - INFO - LLM Extracted Filters: {'location': 'Port Foad'}
+2026-03-01 13:39:51,290 - INFO - New Filters: {'location': 'Port Foad'}
+2026-03-01 13:39:51,290 - INFO - Merged Filters (Session user_streamlit): {'location': 'Port Foad', 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-03-01 13:39:52,024 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:44554 - "POST /v1/chat HTTP/1.1" 200 OK
