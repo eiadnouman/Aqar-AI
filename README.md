@@ -1,78 +1,63 @@
-![Status](https://img.shields.io/badge/Status-Work%20in%20Progress-yellow)
+# Aqar AI (Egyptian Real Estate Assistant)
 
-# 🏠 Aqar AI (Smart Egyptian Real Estate Advisor)
+RAG-based real estate assistant for the Egyptian market, with:
+- FastAPI backend (`/api/v1/*`)
+- Streamlit frontend (`src/app.py`)
+- Hybrid retrieval (FAISS + BM25)
+- Arabic conversational recommendations
 
-A sophisticated RAG (Retrieval-Augmented Generation) application designed to act as an intelligent, human-like real estate consultant for the Egyptian market.
+## Project Structure
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
-![LangChain](https://img.shields.io/badge/LangChain-Enabled-green)
-![Groq](https://img.shields.io/badge/Groq-Llama3-orange)
+- `backend/`: FastAPI app, RAG orchestration, services
+- `src/`: Streamlit frontend
+- `data/`: FAISS index + property images
+- `scripts/interactive_chat.py`: terminal smoke-test client
+- `tests/`: automated tests
 
-## 🌟 Features
+## Requirements
 
--   **Human-like Personality**: Speaks friendly, professional Egyptian Arabic (عامية راقية).
--   **Intelligent Search**: Uses Semantic Search to understand "intent" not just keywords (e.g., "شقة لقطة في التجمع" works!).
--   **Dual-Engine Power**:
-    -   **Primary**: Groq (Llama 3 70B) for lightning-fast, high-IQ responses.
-    -   **Fallback**: Mixtral-8x7B (via HuggingFace) ensures the app never stops working.
--   **Modern UI**: Built with Streamlit for a clean, responsive experience.
+- Python 3.9+
+- `.env` in project root with at least one model provider:
 
-## 🚀 Getting Started
-
-### Prerequisites
-
--   Python 3.9+ (Note: For **GPU/CUDA** support, use Python 3.10 - 3.12. Python 3.13 currently supports CPU-only).
--   A [HuggingFace API Token](https://huggingface.co/settings/tokens) (Required for logic).
--   A [Groq API Key](https://console.groq.com/keys) (Recommended for speed/quality).
-
-### Installation
-
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/eiadnouman/egypt-real-estate-ai.git
-    cd egypt-real-estate-ai
-    ```
-
-2.  **Create Environment** (Optional but recommended):
-    ```bash
-    python -m venv venv
-    venv\Scripts\activate
-    ```
-
-3.  **Install Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Configuration**:
-    Create a `.env` file in the root directory:
-    ```env
-    HUGGINGFACEHUB_API_TOKEN=hf_xxxx...
-    GROQ_API_KEY=gsk_xxxx...
-    ```
-
-5.  **Initialize Data**:
-    Run the setup script to create the vector database:
-    ```bash
-    python setup.py
-    ```
-
-### ▶️ Usage
-
-Run the web application:
-```bash
-streamlit run app.py
+```env
+GROQ_API_KEY=gsk_xxx
+# Optional unless Groq is unavailable:
+HUGGINGFACEHUB_API_TOKEN=hf_xxx
 ```
-*Or simply double-click `run.bat` on Windows.*
 
-## 🛠️ Tech Stack
+## Installation
 
--   **Framework**: Streamlit
--   **Orchestration**: LangChain
--   **LLMs**: Llama 3 (Groq), Mixtral (HuggingFace)
--   **Embeddings**: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
--   **Vector DB**: FAISS
+```bash
+python -m venv venv
+source venv/bin/activate   # Linux/macOS
+# venv\Scripts\activate    # Windows
+pip install -r requirements.txt
+```
 
-## 📝 License
+## Run Backend
 
-This project is open source and available for personal and educational use.
+From project root:
+
+```bash
+PYTHONPATH=backend uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## Run Frontend
+
+```bash
+streamlit run src/app.py
+```
+
+## API Endpoints
+
+- `POST /api/v1/chat`
+- `POST /api/v1/search`
+- `POST /api/v1/recommend/similar`
+- `GET /health`
+- `GET /docs`
+
+## Quick Manual Test
+
+```bash
+python scripts/interactive_chat.py
+```

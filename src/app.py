@@ -30,6 +30,19 @@ ST_STYLE = """
     .stApp {
         background-color: #0e1117;
         color: #ffffff;
+        direction: rtl;
+    }
+    
+    /* Input Fields RTL */
+    .stTextInput input, .stTextArea textarea, .stChatInput input {
+        direction: rtl !important;
+        text-align: right !important;
+    }
+
+    /* Chat Messages RTL align */
+    .stChatMessage {
+        direction: rtl;
+        text-align: right;
     }
     
     /* Header Gradient */
@@ -37,8 +50,9 @@ ST_STYLE = """
         background: -webkit-linear-gradient(45deg, #00d2ff, #3a7bd5);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-family: 'Helvetica Neue', sans-serif;
+        font-family: 'Helvetica Neue', 'Tajawal', sans-serif;
         font-weight: 800;
+        text-align: right;
     }
 
     /* Property Card - Glassmorphism */
@@ -51,6 +65,8 @@ ST_STYLE = """
         margin-bottom: 20px;
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        direction: rtl;
+        text-align: right;
     }
     .property-card-container:hover {
         transform: translateY(-5px);
@@ -123,7 +139,7 @@ ST_STYLE = """
 st.markdown(ST_STYLE, unsafe_allow_html=True)
 
 # --- API Connection Helper ---
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000/v1")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
 
 def chat_with_api(message: str, session_id: str = "default_session"):
     try:

@@ -8,4 +8,6 @@ faiss-cpu
 sentence-transformers
 groq
 langchain-groq
+numpy
 pydantic
+rank-bm25

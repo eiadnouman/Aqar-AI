@@ -1,7 +1,7 @@
 import requests
 import sys
 
-URL = "http://localhost:8000/v1/chat"
+URL = "http://localhost:8000/api/v1/chat"
 
 import uuid
 
