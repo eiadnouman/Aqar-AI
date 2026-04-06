@@ -23,7 +23,7 @@ class LLMManager:
                     temperature=0.2,
                     model_name="openai/gpt-oss-120b",
                     groq_api_key=settings.groq_api_key.strip(),
-                    max_tokens=900,
+                    max_tokens=2048,
                     top_p=0.9,
                 )
                 logger.info("Connected to Groq successfully.")
@@ -52,6 +52,7 @@ class LLMManager:
         return HuggingFaceEndpoint(
             repo_id=repo_id,
             temperature=0.1,
+            max_new_tokens=2048,
             huggingfacehub_api_token=hf_token,
         )
 

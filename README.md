@@ -57,6 +57,22 @@ PYTHONPATH=backend uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8
 streamlit run src/app.py
 ```
 
+## Unified Run Script
+
+```bash
+./run.sh
+```
+
+Advanced controls:
+
+```bash
+./scripts/manage.sh start all
+./scripts/manage.sh stop all
+./scripts/manage.sh restart backend
+./scripts/manage.sh status
+./scripts/manage.sh logs backend
+```
+
 ## API Endpoints
 
 - `POST /api/v1/chat`

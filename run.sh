@@ -1,3 +1,3 @@
-#!/bin/bash
-source venv/bin/activate
-streamlit run src/app.py
+#!/usr/bin/env bash
+set -euo pipefail
+"$(dirname "$0")/scripts/manage.sh" start all

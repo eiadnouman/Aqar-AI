@@ -59,3 +59,1125 @@ INFO:     127.0.0.1:44550 - "GET /health HTTP/1.1" 200 OK
 2026-03-01 13:39:51,290 - INFO - Merged Filters (Session user_streamlit): {'location': 'Port Foad', 'min_bedrooms': 3, 'property_type': 'apartment'}
 2026-03-01 13:39:52,024 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO:     127.0.0.1:44554 - "POST /v1/chat HTTP/1.1" 200 OK
+INFO:     Will watch for changes in these directories: ['/storage/Graduation Project/Aqar-AI']
+ERROR:    [Errno 98] Address already in use
+INFO:     Will watch for changes in these directories: ['/storage/Graduation Project/Aqar-AI']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [142273] using StatReload
+INFO:     Started server process [142275]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:50766 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50766 - "GET /openapi.json HTTP/1.1" 200 OK
+2026-03-08 16:23:58,363 - aqarai - INFO - Connecting to Groq (Llama 3.3)...
+2026-03-08 16:23:58,569 - aqarai - INFO - Connected to Groq successfully.
+2026-03-08 16:24:00,646 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-03-08 16:24:00,646 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-03-08 16:24:06,233 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-03-08 16:24:06,274 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-03-08 16:24:06,282 - aqarai - INFO - Vector Database loaded successfully.
+2026-03-08 16:24:06,282 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-03-08 16:24:06,283 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع 3 غرف (Session: 3)
+2026-03-08 16:24:08,055 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-08 16:24:08,081 - aqarai - INFO - LLM Extracted Filters: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-03-08 16:24:08,081 - aqarai - INFO - Active Merged Filters applied: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-03-08 16:24:09,260 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:44140 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     Will watch for changes in these directories: ['/storage/Graduation Project/Aqar-AI']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [93891] using StatReload
+INFO:     Started server process [93893]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'backend/app/services/llm_manager.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [93893]
+INFO:     Started server process [106163]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/storage/Graduation Project/Aqar-AI']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [106658] using StatReload
+INFO:     Started server process [106675]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+2026-04-05 16:34:20,769 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 16:34:20,936 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 16:34:23,560 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 16:34:23,560 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 16:34:32,879 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 16:34:33,114 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 16:34:33,134 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 16:34:33,135 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 16:34:33,148 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 16:34:33,167 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع وتكون على الأقل 3 غرف وميزانيتي متزيدش عن 12 مليون جنيه (Session: test_123)
+2026-04-05 16:34:34,951 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 16:34:35,010 - aqarai - INFO - LLM Extracted Filters: {'location': None, 'max_price': 12000000, 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-04-05 16:34:35,011 - aqarai - INFO - Active Merged Filters applied: {'max_price': 12000000, 'min_bedrooms': 3, 'property_type': 'apartment'}
+2026-04-05 16:34:38,129 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:36960 - "POST /api/v1/chat HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'backend/app/services/rag_service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [106675]
+INFO:     Started server process [110763]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+/usr/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+INFO:     Will watch for changes in these directories: ['/storage/Graduation Project/Aqar-AI']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [111244] using StatReload
+INFO:     Started server process [111247]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [111247]
+INFO:     Stopping reloader process [111244]
+nohup: ignoring input
+INFO:     Started server process [114159]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-04-05 16:39:49,363 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 16:39:49,538 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 16:39:52,234 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 16:39:52,234 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 16:39:59,811 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 16:39:59,844 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 16:39:59,852 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 16:39:59,852 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 16:39:59,858 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 16:39:59,858 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع وتكون 3 غرف وميزانيتي متزيدش عن 12 مليون (Session: test_after_fix)
+2026-04-05 16:40:01,375 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 16:40:01,383 - aqarai - INFO - LLM Extracted Filters: {'location': None, 'max_price': 12000000, 'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
+2026-04-05 16:40:01,384 - aqarai - INFO - Active Merged Filters applied: {'max_price': 12000000, 'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
+2026-04-05 16:40:03,668 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:39554 - "POST /api/v1/chat HTTP/1.1" 200 OK
+nohup: ignoring input
+INFO:     Started server process [116362]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-04-05 16:41:16,324 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 16:41:16,410 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 16:41:18,112 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 16:41:18,112 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 16:41:24,472 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 16:41:24,498 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 16:41:24,505 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 16:41:24,506 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 16:41:24,517 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 16:41:24,517 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع وتكون 3 غرف (Session: test_after_patch_2)
+2026-04-05 16:41:27,228 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 16:41:27,245 - aqarai - INFO - LLM Extracted Filters: {'location': None, 'property_type': 'apartment', 'min_bedrooms': 3, 'max_bedrooms': 3}
+2026-04-05 16:41:27,245 - aqarai - INFO - Active Merged Filters applied: {'property_type': 'apartment', 'min_bedrooms': 3, 'max_bedrooms': 3}
+2026-04-05 16:41:28,966 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:39342 - "POST /api/v1/chat HTTP/1.1" 200 OK
+nohup: ignoring input
+Traceback (most recent call last):
+  File "/storage/Graduation Project/Aqar-AI/./venv/bin/uvicorn", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 424, in main
+    run(
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 594, in run
+    server.run()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/storage/Graduation Project/Aqar-AI/backend/app/main.py", line 3, in <module>
+    from app.api.v1 import chat, search, recommend
+  File "/storage/Graduation Project/Aqar-AI/backend/app/api/v1/chat.py", line 3, in <module>
+    from app.services.rag_service import RAGService
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 10, in <module>
+    class RAGService:
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 23, in RAGService
+    def get_recommendation(self, query: str, session_id: str = None) -> Tuple[str, List[Document]]:
+                                                                        ^^^^^
+NameError: name 'Tuple' is not defined. Did you mean: 'tuple'?
+nohup: ignoring input
+Traceback (most recent call last):
+  File "/storage/Graduation Project/Aqar-AI/./venv/bin/uvicorn", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 424, in main
+    run(
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 594, in run
+    server.run()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/storage/Graduation Project/Aqar-AI/backend/app/main.py", line 3, in <module>
+    from app.api.v1 import chat, search, recommend, webhook
+  File "/storage/Graduation Project/Aqar-AI/backend/app/api/v1/chat.py", line 3, in <module>
+    from app.services.rag_service import RAGService
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 10, in <module>
+    class RAGService:
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 23, in RAGService
+    def get_recommendation(self, query: str, session_id: str = None) -> Tuple[str, List[Document]]:
+                                                                        ^^^^^
+NameError: name 'Tuple' is not defined. Did you mean: 'tuple'?
+nohup: ignoring input
+Traceback (most recent call last):
+  File "/storage/Graduation Project/Aqar-AI/./venv/bin/uvicorn", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 424, in main
+    run(
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 594, in run
+    server.run()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/storage/Graduation Project/Aqar-AI/backend/app/main.py", line 3, in <module>
+    from app.api.v1 import chat, search, recommend
+  File "/storage/Graduation Project/Aqar-AI/backend/app/api/v1/chat.py", line 3, in <module>
+    from app.services.rag_service import RAGService
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 9, in <module>
+    class RAGService:
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 23, in RAGService
+    def get_recommendation(self, query: str, session_id: str = None) -> Tuple[str, List[Document]]:
+                                                                        ^^^^^
+NameError: name 'Tuple' is not defined. Did you mean: 'tuple'?
+nohup: ignoring input
+Traceback (most recent call last):
+  File "/storage/Graduation Project/Aqar-AI/./venv/bin/uvicorn", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 424, in main
+    run(
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 594, in run
+    server.run()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/storage/Graduation Project/Aqar-AI/backend/app/main.py", line 3, in <module>
+    from app.api.v1 import chat, search, recommend
+  File "/storage/Graduation Project/Aqar-AI/backend/app/api/v1/chat.py", line 3, in <module>
+    from app.services.rag_service import RAGService
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 9, in <module>
+    class RAGService:
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 23, in RAGService
+    def get_recommendation(self, query: str, session_id: str = None) -> Tuple[str, List[Document]]:
+                                                                        ^^^^^
+NameError: name 'Tuple' is not defined. Did you mean: 'tuple'?
+nohup: ignoring input
+Traceback (most recent call last):
+  File "/storage/Graduation Project/Aqar-AI/./venv/bin/uvicorn", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 424, in main
+    run(
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 594, in run
+    server.run()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 71, in serve
+    await self._serve(sockets)
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 78, in _serve
+    config.load()
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/config.py", line 439, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/storage/Graduation Project/Aqar-AI/backend/app/main.py", line 3, in <module>
+    from app.api.v1 import chat, search, recommend
+  File "/storage/Graduation Project/Aqar-AI/backend/app/api/v1/chat.py", line 3, in <module>
+    from app.services.rag_service import RAGService
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 9, in <module>
+    class RAGService:
+  File "/storage/Graduation Project/Aqar-AI/backend/app/services/rag_service.py", line 23, in RAGService
+    def get_recommendation(self, query: str, session_id: str = None) -> Tuple[str, List[Document]]:
+                                                                        ^^^^^
+NameError: name 'Tuple' is not defined. Did you mean: 'tuple'?
+nohup: ignoring input
+INFO:     Started server process [218842]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58234 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46256 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:09:00,675 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 18:09:00,852 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:09:01,004 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:09:01,004 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:09:06,286 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:09:06,386 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:09:06,397 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:09:06,398 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:09:06,404 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:09:06,404 - aqarai - INFO - Initializing Cross-Encoder (Multilingual)...
+INFO:     127.0.0.1:49558 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53936 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:10:32,175 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 18:10:32,222 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:10:32,223 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:10:32,223 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:10:46,821 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:10:46,822 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:10:46,833 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:10:46,833 - aqarai - INFO - Initializing Cross-Encoder (Multilingual)...
+INFO:     127.0.0.1:49274 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49282 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:11:28,404 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 18:11:28,480 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:11:28,481 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:11:28,482 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+nohup: ignoring input
+INFO:     Started server process [223309]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49060 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:11:52,374 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 18:11:52,542 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:11:54,226 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:11:54,226 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:12:01,543 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:12:01,627 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:12:01,641 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:12:01,641 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:12:01,659 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:12:01,673 - aqarai - INFO - Processing Chat Request: اهلا (Session: user_streamlit)
+2026-04-05 18:12:02,605 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 18:12:02,612 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'مرحبًا! كيف يمكنني مساعدتك في البحث عن عقار اليوم؟ هل تبحث عن منطقة معينة، نوع عقار، ميزانية، أو عدد غرف؟ أخبرني بما تحتاجه وسأقوم بإعداد الفلاتر المناسبة لك.'}}. Falling back to Regex constraints.
+2026-04-05 18:12:02,613 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:12:04,507 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:49070 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38112 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38128 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:12:34,740 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 18:12:34,823 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:12:34,830 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:12:34,830 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:12:41,841 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:12:41,841 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:12:41,852 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:12:41,853 - aqarai - INFO - Processing Chat Request: اهلا (Session: user_streamlit)
+2026-04-05 18:12:42,390 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 18:12:42,391 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كيف يمكنني مساعدتك في البحث عن عقار يناسب احتياجاتك؟'}}. Falling back to Regex constraints.
+2026-04-05 18:12:42,391 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:12:44,130 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:38142 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49678 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:13:05,949 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 18:13:06,016 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:13:06,017 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:13:06,017 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:13:10,999 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:13:10,999 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:13:11,010 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:13:11,011 - aqarai - INFO - Processing Chat Request: اهلا (Session: user_streamlit)
+2026-04-05 18:13:11,546 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 18:13:11,547 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كيف يمكنني مساعدتك في البحث عن عقار يناسب احتياجاتك؟ 😊'}}. Falling back to Regex constraints.
+2026-04-05 18:13:11,547 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:13:13,412 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:49684 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40342 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:13:29,531 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 18:13:29,633 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:13:29,635 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:13:29,635 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:13:39,305 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:13:39,305 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:13:39,317 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:13:39,317 - aqarai - INFO - Processing Chat Request: اهلا (Session: user_streamlit)
+2026-04-05 18:13:41,924 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 18:13:41,924 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كيف يمكنني مساعدتك في البحث عن عقار يناسب احتياجاتك؟ 🌟'}}. Falling back to Regex constraints.
+2026-04-05 18:13:41,924 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:13:43,985 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:40344 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 18:13:55,454 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 18:13:55,519 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:13:55,519 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:13:55,519 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:14:00,803 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:14:00,803 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:14:00,814 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:14:00,815 - aqarai - INFO - Processing Chat Request: اهلا (Session: user_streamlit)
+2026-04-05 18:14:03,811 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 18:14:03,822 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كيف يمكنني مساعدتك في البحث عن عقار يناسب احتياجاتك؟ 🌟'}}. Falling back to Regex constraints.
+2026-04-05 18:14:03,822 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:14:04,737 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-05 18:14:04,749 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 19.000000 seconds
+2026-04-05 18:14:27,976 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:47608 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43740 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:14:28,002 - aqarai - INFO - Connecting to Groq (GPT OSS 120B)...
+2026-04-05 18:14:28,074 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:14:28,076 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:14:28,076 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:14:41,732 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:14:41,732 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:14:41,743 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:14:41,744 - aqarai - INFO - Processing Chat Request: اهلا (Session: user_streamlit)
+2026-04-05 18:14:43,120 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 18:14:43,121 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كيف يمكنني مساعدتك اليوم في البحث عن عقار يناسب احتياجاتك؟'}}. Falling back to Regex constraints.
+2026-04-05 18:14:43,121 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:14:43,378 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2026-04-05 18:14:43,378 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 2.000000 seconds
+2026-04-05 18:14:47,222 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:43744 - "POST /api/v1/chat HTTP/1.1" 200 OK
+nohup: ignoring input
+INFO:     Started server process [228405]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:47680 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47694 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:16:44,654 - aqarai - INFO - Connecting to Groq (llama-3.1-8b-instant)...
+2026-04-05 18:16:44,952 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:16:47,835 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:16:47,835 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:16:52,449 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:16:52,478 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:16:52,485 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:16:52,485 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:16:52,490 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:16:52,491 - aqarai - INFO - Processing Chat Request: هاي (Session: user_streamlit)
+2026-04-05 18:16:52,978 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 18:16:52,987 - aqarai - INFO - Tool Calling Extracted Filters: {}
+2026-04-05 18:16:52,988 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:16:54,193 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:47702 - "POST /api/v1/chat HTTP/1.1" 200 OK
+nohup: ignoring input
+INFO:     Started server process [232015]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+nohup: ignoring input
+INFO:     Started server process [239966]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:45516 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:28:59,767 - aqarai - INFO - Connecting to Native Groq (llama-3.3-70b-versatile)...
+2026-04-05 18:29:00,097 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:29:03,142 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:29:03,142 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+INFO:     127.0.0.1:34132 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:29:09,207 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:29:09,421 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:29:09,440 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:29:09,440 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:29:09,452 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:29:09,472 - aqarai - INFO - Processing Chat Request: hi (Session: user_streamlit)
+2026-04-05 18:29:10,240 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 18:29:10,274 - aqarai - INFO - Tool Calling Extracted Filters: {}
+2026-04-05 18:29:10,275 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:29:12,068 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:45526 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41552 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:29:12,114 - aqarai - INFO - Connecting to Native Groq (llama-3.3-70b-versatile)...
+2026-04-05 18:29:12,158 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:29:12,165 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:29:12,166 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:29:15,702 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:29:15,702 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:29:15,708 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:29:15,709 - aqarai - INFO - Processing Chat Request: ها (Session: user_streamlit)
+2026-04-05 18:29:16,466 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 18:29:16,467 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'New Cairo'}
+2026-04-05 18:29:16,467 - aqarai - INFO - Active Merged Filters applied: {'location': 'New Cairo'}
+2026-04-05 18:29:17,727 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:41558 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43154 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:29:30,958 - aqarai - INFO - Connecting to Native Groq (llama-3.3-70b-versatile)...
+2026-04-05 18:29:31,023 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:29:31,024 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:29:31,024 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:29:37,627 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:29:37,627 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:29:37,633 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:29:37,634 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع 3 غرف (Session: user_streamlit)
+2026-04-05 18:29:38,276 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 18:29:38,277 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'The 5th Settlement', 'min_bedrooms': 3}
+2026-04-05 18:29:38,278 - aqarai - INFO - Active Merged Filters applied: {'location': 'The 5th Settlement', 'min_bedrooms': 3}
+2026-04-05 18:29:39,650 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:43160 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45750 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58818 - "POST /v1/chat HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58830 - "POST /v1/chat HTTP/1.1" 404 Not Found
+2026-04-05 18:42:08,026 - aqarai - INFO - Connecting to Native Groq (llama-3.3-70b-versatile)...
+2026-04-05 18:42:08,316 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:42:08,361 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:42:08,361 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:42:16,510 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:42:16,519 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:42:16,535 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:42:16,556 - aqarai - INFO - Processing Chat Request: عايز شقة (Session: None)
+2026-04-05 18:42:17,666 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 18:42:17,690 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'New Cairo', 'property_type': 'apartment'}
+2026-04-05 18:42:17,691 - aqarai - INFO - Active Merged Filters applied: {'location': 'New Cairo', 'property_type': 'apartment'}
+2026-04-05 18:42:19,457 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:60688 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 18:42:19,490 - aqarai - INFO - Connecting to Native Groq (llama-3.3-70b-versatile)...
+2026-04-05 18:42:19,554 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:42:19,557 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:42:19,557 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:42:23,803 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:42:23,804 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:42:23,815 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:42:23,816 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع بـ 3 مليون (Session: None)
+2026-04-05 18:42:24,577 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 18:42:24,581 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'tool call validation failed: parameters for tool SearchFilters did not match schema: errors: [`/max_price`: expected number, but got string, `/max_price`: expected null, but got string]', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=SearchFilters>{"location": "The 5th Settlement", "max_price": "3000000.0"}</function>'}}. Falling back to Regex constraints.
+2026-04-05 18:42:24,585 - aqarai - INFO - Active Merged Filters applied: {'max_price': 3000000.0, 'location': 'New Cairo'}
+2026-04-05 18:42:26,010 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:36370 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 18:46:11,033 - aqarai - INFO - Connecting to Native Groq (llama-3.3-70b-versatile)...
+2026-04-05 18:46:11,110 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:46:11,113 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:46:11,113 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:46:15,223 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:46:15,224 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:46:15,230 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:46:15,238 - aqarai - INFO - Processing Chat Request: ما هو اسم الموديل اللي بتستخدمه؟ (Session: None)
+2026-04-05 18:46:16,021 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 18:46:16,040 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'New Cairo'}
+2026-04-05 18:46:16,040 - aqarai - INFO - Active Merged Filters applied: {'location': 'New Cairo'}
+2026-04-05 18:46:17,131 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:34534 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [239966]
+nohup: ignoring input
+INFO:     Started server process [270825]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:60266 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 18:46:42,468 - aqarai - INFO - Connecting to Native Groq (meta-llama/llama-4-scout-17b-16e-instruct)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 18:46:42,648 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 18:46:45,678 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:46:45,678 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:46:50,160 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:46:50,187 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:46:50,192 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:46:50,192 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:46:50,197 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:46:50,197 - aqarai - INFO - Processing Chat Request: مرحبا (Session: None)
+2026-04-05 18:46:50,672 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 18:46:50,672 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'مرحبا! كيف يمكنني مساعدتك في البحث عن العقارات؟ هل لديك استفسار محدد عن الموقع أو نوع العقار أو الميزانية؟'}}. Falling back to Regex constraints.
+2026-04-05 18:46:50,672 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:46:52,068 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:46040 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [270825]
+nohup: ignoring input
+INFO:     Started server process [272874]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+nohup: ignoring input
+INFO:     Started server process [278810]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-04-05 18:51:03,518 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+2026-04-05 18:51:03,518 - aqarai - ERROR - Groq connection failed: Can't instantiate abstract class GroqDirectLLM without an implementation for abstract methods 'agenerate_prompt', 'generate_prompt'. Falling back to HuggingFace.
+2026-04-05 18:51:03,518 - aqarai - INFO - Initializing Fallback Model: mistralai/Mixtral-8x7B-Instruct-v0.1
+2026-04-05 18:51:05,248 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:51:05,248 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:51:09,375 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:51:09,393 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:51:09,399 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:51:09,399 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:51:09,405 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:51:09,405 - aqarai - INFO - Processing Chat Request: مرحبا (Session: None)
+2026-04-05 18:51:09,405 - aqarai - WARNING - Native Function Calling failed: . Falling back to Regex constraints.
+2026-04-05 18:51:09,406 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:51:09,839 - aqarai - ERROR - LLM Generation Error: 
+INFO:     127.0.0.1:46088 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [278810]
+nohup: ignoring input
+INFO:     Started server process [279695]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+nohup: ignoring input
+INFO:     Started server process [280344]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8000): address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+2026-04-05 18:52:00,234 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+2026-04-05 18:52:00,235 - aqarai - ERROR - Groq connection failed: "GroqDirectLLM" object has no field "model_name". Falling back to HuggingFace.
+2026-04-05 18:52:00,235 - aqarai - INFO - Initializing Fallback Model: mistralai/Mixtral-8x7B-Instruct-v0.1
+2026-04-05 18:52:02,612 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:52:02,612 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:52:07,395 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:52:07,428 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:52:07,438 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:52:07,439 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:52:07,450 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:52:07,451 - aqarai - INFO - Processing Chat Request: مرحبا (Session: None)
+2026-04-05 18:52:07,451 - aqarai - WARNING - Native Function Calling failed: . Falling back to Regex constraints.
+2026-04-05 18:52:07,452 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:52:08,332 - aqarai - ERROR - LLM Generation Error: 
+INFO:     127.0.0.1:57754 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [279695]
+nohup: ignoring input
+INFO:     Started server process [281877]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-04-05 18:52:52,804 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+2026-04-05 18:52:52,804 - aqarai - ERROR - Groq connection failed: Can't instantiate abstract class GroqDirectLLM without an implementation for abstract method 'invoke'. Falling back to HuggingFace.
+2026-04-05 18:52:52,804 - aqarai - INFO - Initializing Fallback Model: mistralai/Mixtral-8x7B-Instruct-v0.1
+2026-04-05 18:52:54,505 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:52:54,505 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:52:59,444 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:52:59,494 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:52:59,506 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:52:59,506 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:52:59,517 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:52:59,523 - aqarai - INFO - Processing Chat Request: مرحبا (Session: None)
+2026-04-05 18:52:59,525 - aqarai - WARNING - Native Function Calling failed: . Falling back to Regex constraints.
+2026-04-05 18:52:59,529 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:53:00,100 - aqarai - ERROR - LLM Generation Error: 
+INFO:     127.0.0.1:50208 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [281877]
+nohup: ignoring input
+INFO:     Started server process [282932]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-04-05 18:53:23,388 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+2026-04-05 18:53:23,389 - aqarai - ERROR - Groq connection failed: 1 validation error for GroqDirectLLM
+model_name
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Falling back to HuggingFace.
+2026-04-05 18:53:23,389 - aqarai - INFO - Initializing Fallback Model: mistralai/Mixtral-8x7B-Instruct-v0.1
+2026-04-05 18:53:25,059 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:53:25,059 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:53:34,621 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:53:34,727 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:53:34,744 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:53:34,745 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:53:34,755 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:53:34,767 - aqarai - INFO - Processing Chat Request: مرحبا (Session: None)
+2026-04-05 18:53:34,773 - aqarai - WARNING - Native Function Calling failed: . Falling back to Regex constraints.
+2026-04-05 18:53:34,777 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:53:35,888 - aqarai - ERROR - LLM Generation Error: 
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [282932]
+nohup: ignoring input
+INFO:     Started server process [284099]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+nohup: ignoring input
+INFO:     Started server process [284487]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8000): address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+2026-04-05 18:54:18,596 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+2026-04-05 18:54:18,597 - aqarai - ERROR - Groq connection failed: 1 validation error for GroqDirectLLM
+model_name
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.12/v/missing. Falling back to HuggingFace.
+2026-04-05 18:54:18,597 - aqarai - INFO - Initializing Fallback Model: mistralai/Mixtral-8x7B-Instruct-v0.1
+2026-04-05 18:54:21,501 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 18:54:21,501 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 18:54:28,542 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 18:54:28,592 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 18:54:28,603 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 18:54:28,603 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 18:54:28,618 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 18:54:28,619 - aqarai - INFO - Processing Chat Request: مرحبا (Session: None)
+2026-04-05 18:54:28,620 - aqarai - WARNING - Native Function Calling failed: . Falling back to Regex constraints.
+2026-04-05 18:54:28,621 - aqarai - INFO - Active Merged Filters applied: {}
+2026-04-05 18:54:29,474 - aqarai - ERROR - LLM Generation Error: 
+INFO:     127.0.0.1:44768 - "POST /api/v1/chat HTTP/1.1" 200 OK
+nohup: ignoring input
+INFO:     Started server process [298278]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56748 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 19:03:53,688 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:03:53,864 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:03:56,543 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:03:56,543 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:04:02,089 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 19:04:02,211 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 19:04:02,220 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:04:02,221 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:04:02,229 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:04:02,232 - aqarai - INFO - Processing Chat Request: عايز شقة (Session: None)
+2026-04-05 19:04:02,908 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:04:02,920 - aqarai - INFO - Tool Calling Extracted Filters: {'property_type': 'apartment'}
+2026-04-05 19:04:02,920 - aqarai - INFO - Active Merged Filters applied: {'property_type': 'apartment'}
+2026-04-05 19:04:05,249 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:33456 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 19:04:05,312 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:04:05,358 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:04:05,360 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:04:05,360 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:04:09,003 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:04:09,003 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:04:09,009 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:04:09,009 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع بـ 3 مليون (Session: None)
+2026-04-05 19:04:09,986 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:04:09,987 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'The 5th Settlement', 'max_price': 3000000.0, 'property_type': 'apartment'}
+2026-04-05 19:04:09,987 - aqarai - INFO - Active Merged Filters applied: {'location': 'The 5th Settlement', 'max_price': 3000000.0, 'property_type': 'apartment'}
+2026-04-05 19:04:11,418 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:50614 - "POST /api/v1/chat HTTP/1.1" 200 OK
+nohup: ignoring input
+INFO:     Started server process [300747]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:39564 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 19:05:29,131 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:05:29,223 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:05:31,088 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:05:31,088 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:05:37,932 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 19:05:38,044 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 19:05:38,064 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:05:38,064 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:05:38,076 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:05:38,090 - aqarai - INFO - Processing Chat Request: عايز شقة (Session: None)
+2026-04-05 19:05:38,857 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:05:38,888 - aqarai - INFO - Tool Calling Extracted Filters: {'property_type': 'apartment'}
+2026-04-05 19:05:38,888 - aqarai - INFO - Active Merged Filters applied: {'property_type': 'apartment'}
+2026-04-05 19:05:40,609 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:39580 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 19:05:40,626 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:05:40,691 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:05:40,699 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:05:40,699 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:05:44,883 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:05:44,884 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:05:44,890 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:05:44,891 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع بـ 3 مليون (Session: None)
+2026-04-05 19:05:45,672 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:05:45,674 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'Al Tajammu'}
+2026-04-05 19:05:45,674 - aqarai - INFO - Active Merged Filters applied: {'location': 'Al Tajammu'}
+2026-04-05 19:05:47,212 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:58976 - "POST /api/v1/chat HTTP/1.1" 200 OK
+nohup: ignoring input
+INFO:     Started server process [303727]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:36106 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 19:07:20,441 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:07:20,542 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:07:22,525 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:07:22,525 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:07:26,956 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 19:07:26,973 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 19:07:26,979 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:07:26,979 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:07:26,985 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:07:26,986 - aqarai - INFO - Processing Chat Request: عايز شقة (Session: None)
+2026-04-05 19:07:27,577 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:07:27,589 - aqarai - INFO - Tool Calling Extracted Filters: {'property_type': 'apartment'}
+2026-04-05 19:07:27,589 - aqarai - INFO - Active Merged Filters applied: {'property_type': 'apartment'}
+2026-04-05 19:07:29,220 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:33488 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 19:07:29,224 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:07:29,254 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:07:29,254 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:07:29,254 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:07:33,001 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:07:33,001 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:07:33,007 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:07:33,008 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع بـ 3 مليون (Session: None)
+2026-04-05 19:07:33,852 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:07:33,854 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'Sheikh Zayed City', 'max_price': 3000000.0, 'property_type': 'Apartment'}
+2026-04-05 19:07:33,854 - aqarai - INFO - Active Merged Filters applied: {'location': 'Sheikh Zayed City', 'max_price': 3000000.0, 'property_type': 'Apartment'}
+2026-04-05 19:07:35,198 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:33496 - "POST /api/v1/chat HTTP/1.1" 200 OK
+nohup: ignoring input
+INFO:     Started server process [307945]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:38338 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38342 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 19:09:57,396 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:09:57,557 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:09:59,465 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:09:59,465 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:10:04,554 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 19:10:04,599 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 19:10:04,610 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:10:04,610 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:10:04,622 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:10:04,623 - aqarai - INFO - Processing Chat Request: ازيك يا صديقي (Session: None)
+2026-04-05 19:10:05,245 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 19:10:05,246 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كيف أقدر أساعدك اليوم في البحث عن عقار؟'}}. Falling back to Regex constraints.
+2026-04-05 19:10:05,246 - aqarai - ERROR - Error processing chat request: cannot access local variable 'history' where it is not associated with a value
+INFO:     127.0.0.1:38358 - "POST /api/v1/chat HTTP/1.1" 500 Internal Server Error
+2026-04-05 19:10:09,022 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:10:09,059 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:10:09,059 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:10:09,059 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:10:13,734 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:10:13,735 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:10:13,747 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:10:13,748 - aqarai - INFO - Processing Chat Request: ازيك يا صديقي (Session: None)
+2026-04-05 19:10:14,230 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 19:10:14,231 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كيف أقدر أساعدك اليوم في البحث عن عقار أو أي استفسار آخر؟'}}. Falling back to Regex constraints.
+2026-04-05 19:10:14,231 - aqarai - ERROR - Error processing chat request: cannot access local variable 'history' where it is not associated with a value
+INFO:     127.0.0.1:40682 - "POST /api/v1/chat HTTP/1.1" 500 Internal Server Error
+nohup: ignoring input
+INFO:     Started server process [309961]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:44762 - "GET /health HTTP/1.1" 200 OK
+2026-04-05 19:11:07,194 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:11:07,366 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:11:09,790 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:11:09,790 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:11:14,094 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-05 19:11:14,112 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-05 19:11:14,117 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:11:14,117 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:11:14,123 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:11:14,123 - aqarai - INFO - Processing Chat Request: ازيك يا صديقي (Session: None)
+2026-04-05 19:11:14,766 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 19:11:14,767 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كيف أقدر أساعدك اليوم في البحث عن عقار يناسب احتياجاتك؟'}}. Falling back to Regex constraints.
+2026-04-05 19:11:15,174 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:44770 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 19:11:19,356 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:11:19,415 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:11:19,415 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:11:19,415 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:11:22,965 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:11:22,965 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:11:22,971 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:11:22,971 - aqarai - INFO - Processing Chat Request: عايز شقة (Session: None)
+2026-04-05 19:11:23,464 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:11:23,465 - aqarai - INFO - Tool Calling Extracted Filters: {'property_type': 'apartment'}
+2026-04-05 19:11:23,466 - aqarai - INFO - Active Merged Filters applied: {'property_type': 'apartment'}
+2026-04-05 19:11:25,066 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:48530 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 19:23:07,585 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+2026-04-05 19:23:07,772 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:23:07,811 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:23:07,811 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:23:19,993 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:23:19,994 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:23:20,005 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:23:20,007 - aqarai - INFO - Processing Chat Request: عايز شقة (Session: None)
+2026-04-05 19:23:20,619 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:23:20,624 - aqarai - INFO - Tool Calling Extracted Filters: {'property_type': 'apartment'}
+2026-04-05 19:23:20,624 - aqarai - INFO - Active Merged Filters applied: {'property_type': 'apartment'}
+2026-04-05 19:23:22,621 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:40742 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 19:23:22,635 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+2026-04-05 19:23:22,664 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:23:22,665 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:23:22,665 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:23:26,574 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:23:26,575 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:23:26,587 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:23:26,588 - aqarai - INFO - Processing Chat Request: عايز شقة في التجمع بـ 3 مليون (Session: None)
+2026-04-05 19:23:27,537 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:23:27,539 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'The 5th Settlement', 'max_price': 3000000.0, 'property_type': 'Apartment'}
+2026-04-05 19:23:27,539 - aqarai - INFO - Active Merged Filters applied: {'location': 'The 5th Settlement', 'max_price': 3000000.0, 'property_type': 'Apartment'}
+2026-04-05 19:23:29,074 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:57828 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40450 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42866 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42866 - "GET /openapi.json HTTP/1.1" 200 OK
+2026-04-05 19:25:30,929 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-05 19:25:30,998 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:25:30,999 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:25:31,000 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:25:35,117 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:25:35,117 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:25:35,135 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:25:35,136 - aqarai - INFO - Processing Chat Request: اهلا (Session: string)
+2026-04-05 19:25:35,846 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-05 19:25:35,847 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كيف يمكنني مساعدتك في البحث عن عقار يناسب احتياجاتك؟ يمكنك إخباري بالموقع المفضّل، نوع العقار، عدد الغرف، أو نطاق السعر الذي تبحث عنه.'}}. Falling back to Regex constraints.
+2026-04-05 19:25:36,210 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:33354 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 19:26:07,528 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+2026-04-05 19:26:07,589 - aqarai - INFO - Connected to Groq successfully.
+2026-04-05 19:26:07,589 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cuda:0
+2026-04-05 19:26:07,589 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+2026-04-05 19:26:11,651 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-05 19:26:11,652 - aqarai - INFO - Extracted 93 dynamic database locations.
+2026-04-05 19:26:11,662 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-05 19:26:11,663 - aqarai - INFO - Processing Chat Request: عاوز شقة في التجمع الخامس 3 غرف (Session: string)
+2026-04-05 19:26:12,616 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-05 19:26:12,632 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
+2026-04-05 19:26:12,632 - aqarai - INFO - Active Merged Filters applied: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
+2026-04-05 19:26:14,041 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:34906 - "POST /api/v1/chat HTTP/1.1" 200 OK
+2026-04-05 21:22:59,734 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2026-04-05 21:29:29,278 - aqarai - INFO - Processing Chat Request: hello (Session: s1)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [309961]

@@ -11,6 +11,9 @@ venv_win_backup/
 env/
 
 # Data & Models (Do not upload large files except the index)
+.cache/
+*.log
+*.pid
 *.csv
 *.pkl
 !index.pkl

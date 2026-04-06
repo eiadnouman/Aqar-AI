@@ -1,57 +1,56 @@
-nohup: ignoring input
-Traceback (most recent call last):
-  File "/storage/Graduation Project/Aqar-AI/venv/bin/uvicorn", line 10, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1485, in __call__
-    return self.main(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1406, in main
-    rv = self.invoke(ctx)
-         ^^^^^^^^^^^^^^^^
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 1269, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/click/core.py", line 824, in invoke
-    return callback(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 424, in main
-    run(
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/main.py", line 594, in run
-    server.run()
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 67, in run
-    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
-    return runner.run(main)
-           ^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
-    return self._loop.run_until_complete(task)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
-    return future.result()
-           ^^^^^^^^^^^^^^^
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 71, in serve
-    await self._serve(sockets)
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/server.py", line 78, in _serve
-    config.load()
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/config.py", line 439, in load
-    self.loaded_app = import_from_string(self.app)
-                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 22, in import_from_string
-    raise exc from None
-  File "/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
-    module = importlib.import_module(module_str)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
-  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
-  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
-  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-  File "/storage/Graduation Project/Aqar-AI/backend/app/main.py", line 6, in <module>
-    from app.models import ChatRequest, ChatResponse, Property, SearchRequest, SearchResponse, RecommendRequest, RecommendResponse
-ModuleNotFoundError: No module named 'app'
+INFO:     Started server process [73305]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49106 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37446 - "GET /health HTTP/1.1" 200 OK
+2026-04-06 18:30:57,677 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+                    top_p was transferred to model_kwargs.
+                    Please confirm that top_p is what you intended.
+  validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-04-06 18:30:57,856 - aqarai - INFO - Connected to Groq successfully.
+2026-04-06 18:31:00,547 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: intfloat/multilingual-e5-small
+2026-04-06 18:31:05,061 - aqarai - INFO - Loaded property catalog enrichment for 141 listings and discovered 8 service tags.
+2026-04-06 18:31:05,063 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-04-06 18:31:05,091 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-04-06 18:31:05,100 - aqarai - INFO - Vector Database loaded successfully.
+2026-04-06 18:31:05,100 - aqarai - INFO - Extracted 88 dynamic database locations.
+2026-04-06 18:31:05,115 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+2026-04-06 18:31:05,115 - aqarai - INFO - Processing Chat Request: ايه الاخبار (Session: 5e7a5612-0886-4251-a87e-29028eb9cd6a)
+2026-04-06 18:31:05,693 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-06 18:31:05,694 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كل شيء تمام، كيف يمكنني مساعدتك اليوم في البحث عن عقار؟'}}. Falling back to Regex constraints.
+2026-04-06 18:31:06,034 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:37452 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50494 - "GET /health HTTP/1.1" 200 OK
+2026-04-06 18:31:21,888 - aqarai - INFO - Processing Chat Request: عاوز شقة كويسة في التجمع 3 غرف يكون حواليها خدمات (Session: 5e7a5612-0886-4251-a87e-29028eb9cd6a)
+2026-04-06 18:31:23,171 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-06 18:31:23,173 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment', 'desired_services': ['club_house', 'commercial_area', 'green_spaces', 'hospitals', 'schools', 'security', 'swimming_pool', 'transport']}
+2026-04-06 18:31:23,173 - aqarai - INFO - Active Merged Filters applied: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment', 'desired_services': ['club_house', 'commercial_area', 'green_spaces', 'hospitals', 'schools', 'security', 'swimming_pool', 'transport'], 'max_bedrooms': 4}
+2026-04-06 18:31:32,260 - aqarai - WARNING - Nearby services API failed for (30.02259635925293, 31.545814514160156): HTTPSConnectionPool(host='overpass-api.de', port=443): Read timed out. (read timeout=8)
+2026-04-06 18:31:37,495 - aqarai - WARNING - Nearby services API failed for (30.073923110961914, 31.465532302856445): 504 Server Error: Gateway Timeout for url: https://overpass-api.de/api/interpreter
+2026-04-06 18:31:39,932 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:50510 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38416 - "GET /health HTTP/1.1" 200 OK
+2026-04-06 18:31:58,411 - aqarai - INFO - Processing Chat Request: قارن بينهم (Session: 5e7a5612-0886-4251-a87e-29028eb9cd6a)
+2026-04-06 18:31:59,709 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-04-06 18:31:59,710 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أحتاج إلى بعض التفاصيل الإضافية لأتمكّن من مساعدتك بشكل دقيق:\n\n1. **ما هو نوع العقار الذي تريد مقارنته؟** (مثلاً شقة، فيلا، بيت، شاليه، إلخ)  \n2. **هل تبحث عن مقارنة للشراء أم للإيجار؟**  \n3. **ما هي المناطق أو الأحياء التي تهمك؟** (يمكنك ذكر اسم الحي أو المدينة أو أي تفاصيل إقليمية)  \n4. **هل لديك ميزانية محددة أو عدد غرف تريد أن تكون ضمن النطاق؟**  \n5. **هل هناك خدمات معينة تريد توافرها في العقار (مثل نادي، حمام سباحة، مدارس، مستشفيات، أمان، مساحات خضراء، أو قرب وسائل النقل)؟**\n\nبمجرد تزويدي بهذه المعلومات، سأستطيع إعداد الفلاتر المناسبة ومقارنة العقارات التي تلبي احتياجاتك.'}}. Falling back to Regex constraints.
+2026-04-06 18:32:01,821 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:38428 - "POST /api/v1/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33536 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46682 - "GET /health HTTP/1.1" 200 OK
+2026-04-06 18:45:14,488 - aqarai - INFO - Processing Chat Request: عاوز شقة 3 غرف في التجمع (Session: 34d39645-8e0d-409f-a9a1-c2378bb82c5e)
+2026-04-06 18:45:16,223 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-06 18:45:16,225 - aqarai - INFO - Tool Calling Extracted Filters: {'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
+2026-04-06 18:45:16,225 - aqarai - INFO - Active Merged Filters applied: {'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment', 'location': 'Cairo'}
+2026-04-06 18:45:24,917 - aqarai - WARNING - Nearby services API failed for (29.995922088623047, 31.554126739501953): HTTPSConnectionPool(host='overpass-api.de', port=443): Read timed out. (read timeout=8)
+2026-04-06 18:45:27,315 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:46686 - "POST /api/v1/chat HTTP/1.1" 200 OK
+alling back to Regex constraints.
+2026-04-06 18:32:01,821 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-06 18:45:14,488 - aqarai - INFO - Processing Chat Request: عاوز شقة 3 غرف في التجمع (Session: 34d39645-8e0d-409f-a9a1-c2378bb82c5e)
+2026-04-06 18:45:16,223 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-04-06 18:45:16,225 - aqarai - INFO - Tool Calling Extracted Filters: {'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
+2026-04-06 18:45:16,225 - aqarai - INFO - Active Merged Filters applied: {'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment', 'location': 'Cairo'}
+2026-04-06 18:45:24,917 - aqarai - WARNING - Nearby services API failed for (29.995922088623047, 31.554126739501953): HTTPSConnectionPool(host='overpass-api.de', port=443): Read timed out. (read timeout=8)
+2026-04-06 18:45:27,315 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"

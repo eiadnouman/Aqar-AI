@@ -219,7 +219,7 @@ def _safe_float(value):
 
 
 def _resolve_card_image(doc):
-    placeholder = "https://via.placeholder.com/400x300.png?text=No+Image"
+    placeholder = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
     raw_value = doc.get("image_url") or doc.get("image") or ""
     candidate = str(raw_value).strip()
     if not candidate:

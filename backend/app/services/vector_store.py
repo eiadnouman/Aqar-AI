@@ -48,7 +48,7 @@ class VectorStoreManager:
             os.environ["TRANSFORMERS_CACHE"] = transformers_cache_dir
 
             return HuggingFaceEmbeddings(
-                model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+                model_name="intfloat/multilingual-e5-small",
                 cache_folder=hf_cache_dir,
                 model_kwargs={"device": "cpu"},
             )
@@ -164,7 +164,7 @@ class VectorStoreManager:
 
         # 1. Semantic FAISS retrieval
         faiss_retriever = self.vectorstore.as_retriever(search_kwargs={"k": k * 2}) # Pull more for safe intersection
-        faiss_docs = faiss_retriever.invoke(query)
+        faiss_docs = faiss_retriever.invoke(f"query: {query}")
         
         # 2. Keyword BM25 retrieval
         tokenized_query = query.lower().split()
@@ -205,7 +205,7 @@ class VectorStoreManager:
         """Direct vector similarity search."""
         if not self.vectorstore:
              return []
-        docs = self.vectorstore.similarity_search(query, k=k)
+        docs = self.vectorstore.similarity_search(f"query: {query}", k=k)
         return self._enrich_docs(docs)
 
     def _enrich_docs(self, docs: List[Document]) -> List[Document]:
