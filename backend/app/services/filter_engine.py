@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from app.core.logging import logger
@@ -13,6 +13,14 @@ class SearchFilters(BaseModel):
     min_bedrooms: Optional[int] = Field(None, description="Minimum logical bedrooms required.")
     max_bedrooms: Optional[int] = Field(None, description="Maximum conceptual bedrooms requested.")
     property_type: Optional[str] = Field(None, description="Categorization (e.g., apartment, villa, duplex).")
+    listing_intent: Optional[str] = Field(
+        None,
+        description="Intent of listing type. Must be exactly 'rent' for rental requests and 'buy' for purchase requests.",
+    )
+    desired_services: Optional[list[str]] = Field(
+        None,
+        description="List of requested nearby services (e.g., security, schools, hospitals, transport, commercial_area, club_house, green_spaces).",
+    )
 
 class FilterEngine:
     """
@@ -22,22 +30,41 @@ class FilterEngine:
     def __init__(self, llm_manager):
         self.llm_manager = llm_manager
 
-    def extract_filters(self, query: str, available_locations: set) -> Dict[str, Any]:
-        """Extracts filters using LLM (if capable) or Regex fallback."""
-        # We always attempt LLM Tool Calling extraction first for unparalleled precision
+    def extract_filters(
+        self,
+        query: str,
+        available_locations: set,
+        available_services: Optional[Set[str]] = None,
+    ) -> Dict[str, Any]:
+        """Extracts filters using LLM, then backfills missing fields with regex heuristics."""
+        regex_filters = self._extract_filters_regex(query)
+
+        # We always attempt LLM Tool Calling extraction first for precision.
         try:
             llm = self.llm_manager.get_llm()
-            return self._extract_filters_llm(query, llm, available_locations)
+            llm_filters = self._extract_filters_llm(query, llm, available_locations, available_services or set())
+            merged = dict(llm_filters or {})
+            for key, value in regex_filters.items():
+                if key not in merged or merged.get(key) in (None, "", [], {}):
+                    merged[key] = value
+            return merged
         except Exception as e:
             logger.warning(f"Native Function Calling failed: {e}. Falling back to Regex constraints.")
-            return self._extract_filters_regex(query)
+            return regex_filters
 
-    def _extract_filters_llm(self, query: str, llm: Any, available_locations: set) -> Dict[str, Any]:
+    def _extract_filters_llm(
+        self,
+        query: str,
+        llm: Any,
+        available_locations: set,
+        available_services: Set[str],
+    ) -> Dict[str, Any]:
         """Uses native Function Calling to construct the Pydantic schema automatically."""
         if llm is None or not hasattr(llm, "with_structured_output"):
             raise RuntimeError("Structured output is not supported by the active LLM backend.")
 
         locations_str = ", ".join(sorted(list(available_locations))) if available_locations else "No specific locations indexed."
+        services_str = ", ".join(sorted(list(available_services))) if available_services else "No specific services indexed."
 
         template = """
         You are an advanced Real Estate Filter Analyzer.
@@ -45,8 +72,14 @@ class FilterEngine:
         Available Locations DB Context:
         [{locations}]
 
+        Available Services Tags Context:
+        [{services}]
+
         Your job is to perfectly map the user's conversational query to the filter fields.
         Pay extreme attention to regional sub-districts and numeric names (like The 1st Settlement vs 5th Settlement).
+        Detect listing intent precisely:
+        - If user asks about renting/lease/إيجار -> listing_intent='rent'
+        - If user asks about buying/sale/شراء/للبيع -> listing_intent='buy'
         """
         
         prompt = ChatPromptTemplate.from_messages([
@@ -57,7 +90,9 @@ class FilterEngine:
         structured_llm = llm.with_structured_output(SearchFilters)
         chain = prompt | structured_llm
         
-        extracted: SearchFilters = chain.invoke({"query": query, "locations": locations_str})
+        extracted: SearchFilters = chain.invoke(
+            {"query": query, "locations": locations_str, "services": services_str}
+        )
         result = extracted.model_dump(exclude_none=True)
         logger.info(f"Tool Calling Extracted Filters: {result}")
         return result
@@ -88,8 +123,17 @@ class FilterEngine:
             if num_match:
                 filters['max_price'] = float(num_match.group(1))
 
+        rent_tokens = ["rent", "rental", "lease", "للإيجار", "للايجار", "ايجار", "إيجار"]
+        buy_tokens = ["buy", "sale", "for sale", "للبيع", "شراء", "تمليك", "بيع"]
+        q_lower = query.lower()
+        if any(token in q_lower for token in rent_tokens):
+            filters["listing_intent"] = "rent"
+        elif any(token in q_lower for token in buy_tokens):
+            filters["listing_intent"] = "buy"
+
         # Basic Location Mapping for Regex Fallback
         location_map = {
+            "القاهرة": "Cairo", "قاهرة": "Cairo",
             "اول": "The 1st Settlement", "تجمع اول": "The 1st Settlement",
             "خامس": "The 5th Settlement", "تجمع خامس": "The 5th Settlement",
             "تجمع": "New Cairo", "زايد": "Sheikh Zayed", "اكتوبر": "October",
@@ -99,5 +143,21 @@ class FilterEngine:
             if ar in query:
                 filters['location'] = en
                 break
+
+        service_map = {
+            "schools": ["school", "schools", "مدرسة", "مدارس", "جامعة"],
+            "hospitals": ["hospital", "clinic", "medical", "مستشفى", "عيادة"],
+            "transport": ["metro", "transport", "مواصلات", "مترو", "طريق", "محور"],
+            "commercial_area": ["mall", "shopping", "commercial", "مول", "تجاري", "خدمات"],
+            "security": ["security", "حراسة", "أمن", "امن"],
+            "green_spaces": ["garden", "park", "green", "حديقة", "حدائق", "مساحات خضراء"],
+            "club_house": ["club", "clubhouse", "نادي", "كلوب هاوس"],
+        }
+        matched_services = []
+        for canonical, keywords in service_map.items():
+            if any(token in query.lower() for token in keywords):
+                matched_services.append(canonical)
+        if matched_services:
+            filters["desired_services"] = matched_services
                 
         return filters

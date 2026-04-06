@@ -6,6 +6,20 @@ import logging
 logger = logging.getLogger("aqarai")
 router = APIRouter()
 
+
+def _safe_float(value, default=0.0):
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def _safe_int(value, default=0):
+    try:
+        return int(float(value))
+    except Exception:
+        return default
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest, rag_engine: RAGService = Depends(get_rag_service)):
     """Handles natural language conversational queries."""
@@ -19,13 +33,18 @@ async def chat_endpoint(request: ChatRequest, rag_engine: RAGService = Depends(g
             properties.append(Property(
                 title=meta.get("title", "Property Listing"),
                 location=meta.get("location", "Unknown Location"),
-                price=float(meta.get("price", 0)),
-                bedrooms=int(meta.get("bedrooms", 0)),
-                bathrooms=int(meta.get("bathrooms", 0)),
-                size=float(meta.get("size", 0)),
+                price=_safe_float(meta.get("price", 0)),
+                bedrooms=_safe_int(meta.get("bedrooms", 0)),
+                bathrooms=_safe_int(meta.get("bathrooms", 0)),
+                size=_safe_float(meta.get("size", 0)),
                 image_url=meta.get("image", ""),
                 description=doc.page_content.split('Description: ')[-1][:200] + "...",
-                url=meta.get("url", "#")
+                url=meta.get("url", "#"),
+                latitude=_safe_float(meta.get("lat") or meta.get("latitude") or 0) or None,
+                longitude=_safe_float(meta.get("lon") or meta.get("longitude") or 0) or None,
+                distance_km=_safe_float(meta.get("distance_km", 0)) or None,
+                nearby_services=list(meta.get("nearby_services", []) or []),
+                recommendation_score=_safe_float(meta.get("recommendation_score", 0)) or None,
             ))
             
         return ChatResponse(

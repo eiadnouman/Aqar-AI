@@ -10,4 +10,5 @@ groq
 langchain-groq
 numpy
 pydantic
+requests
 rank-bm25

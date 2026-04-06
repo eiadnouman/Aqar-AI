@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import requests
 import logging
+import uuid
 from dotenv import load_dotenv
 
 # Setup Logging
@@ -19,30 +20,59 @@ st.set_page_config(
 )
 
 # --- Validations ---
-if not os.getenv("HUGGINGFACEHUB_API_TOKEN"):
-    st.error("🚨 Critical Error: `HUGGINGFACEHUB_API_TOKEN` is missing from .env file.")
+if not any(
+    [
+        os.getenv("HUGGINGFACEHUB_API_TOKEN"),
+        os.getenv("GROQ_API_KEY"),
+        os.getenv("OPENAI_API_KEY"),
+    ]
+):
+    st.error(
+        "🚨 Critical Error: add at least one model key in `.env` "
+        "(`GROQ_API_KEY` or `OPENAI_API_KEY` or `HUGGINGFACEHUB_API_TOKEN`)."
+    )
     st.stop()
 
 # --- Custom CSS (Premium Dark/Glass Theme) ---
 ST_STYLE = """
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap');
+
     /* Global Theme */
     .stApp {
         background-color: #0e1117;
         color: #ffffff;
         direction: rtl;
+        font-family: 'Cairo', 'Tajawal', sans-serif;
+    }
+
+    html, body, [class*="css"] {
+        font-family: 'Cairo', 'Tajawal', sans-serif !important;
     }
     
     /* Input Fields RTL */
-    .stTextInput input, .stTextArea textarea, .stChatInput input {
+    .stTextInput input, .stTextArea textarea, .stChatInput input, .stChatInput textarea {
         direction: rtl !important;
         text-align: right !important;
+        unicode-bidi: plaintext;
     }
 
     /* Chat Messages RTL align */
-    .stChatMessage {
+    .stChatMessage, .stChatMessageContent, .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span {
         direction: rtl;
         text-align: right;
+        unicode-bidi: plaintext;
+        line-height: 1.9;
+        letter-spacing: 0;
+    }
+
+    .stMarkdown p, .stMarkdown li {
+        font-size: 1.02rem;
+    }
+
+    .stMarkdown ul, .stMarkdown ol {
+        padding-right: 1.2rem;
+        padding-left: 0;
     }
     
     /* Header Gradient */
@@ -50,7 +80,7 @@ ST_STYLE = """
         background: -webkit-linear-gradient(45deg, #00d2ff, #3a7bd5);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-family: 'Helvetica Neue', 'Tajawal', sans-serif;
+        font-family: 'Cairo', 'Tajawal', sans-serif;
         font-weight: 800;
         text-align: right;
     }
@@ -77,29 +107,47 @@ ST_STYLE = """
     /* Card Text Elements */
     .price-tag {
         color: #00d2ff;
-        font-size: 1.25rem;
-        font-weight: 700;
+        font-size: 1.15rem;
+        font-weight: 800;
         margin-top: 5px;
+        line-height: 1.5;
     }
-    .location-text {
+    .location-tag {
         color: #cccccc;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         display: flex;
         align-items: center;
-        gap: 5px;
-        margin-bottom: 8px;
+        gap: 6px;
+        margin: 6px 0 10px 0;
+        line-height: 1.8;
+        unicode-bidi: plaintext;
     }
     .spec-row {
-        display: flex;
-        gap: 10px;
-        font-size: 0.85rem;
-        color: #a0a0a0;
-        margin-bottom: 10px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        font-size: 0.88rem;
+        color: #d5d9e0;
+        margin-bottom: 12px;
     }
     .spec-item {
-        background: rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.12);
         padding: 4px 8px;
         border-radius: 6px;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .property-desc {
+        font-size: 0.92rem;
+        opacity: 0.84;
+        line-height: 1.8;
+        min-height: 52px;
+        margin-bottom: 10px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        unicode-bidi: plaintext;
     }
 
     /* Buttons */
@@ -130,6 +178,8 @@ ST_STYLE = """
         font-weight: 600;
         border: 1px solid rgba(0, 210, 255, 0.3);
         transition: all 0.2s;
+        font-size: 0.92rem;
+        line-height: 1.7;
     }
     .view-link:hover {
         background: rgba(0, 210, 255, 0.2);
@@ -143,26 +193,55 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
 
 def chat_with_api(message: str, session_id: str = "default_session"):
     try:
-        response = requests.post(f"{API_BASE_URL}/chat", json={"message": message, "session_id": session_id})
+        response = requests.post(
+            f"{API_BASE_URL}/chat",
+            json={"message": message, "session_id": session_id},
+            timeout=60,
+        )
         response.raise_for_status()
         return response.json()
+    except requests.exceptions.Timeout:
+        logger.error("API timeout while waiting for /chat response.")
+        return {
+            "answer": "الطلب أخد وقت أطول من المتوقع. جرّب تاني أو قلّل عدد الشروط في الرسالة.",
+            "properties": [],
+        }
     except requests.exceptions.RequestException as e:
         logger.error(f"API Error: {e}")
         return {"answer": "معلش السيرفر مش شغال دلوقتي، تأكد إن الباك-إند شغال.", "properties": []}
 
+
+def _safe_float(value):
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+
+def _resolve_card_image(doc):
+    placeholder = "https://via.placeholder.com/400x300.png?text=No+Image"
+    raw_value = doc.get("image_url") or doc.get("image") or ""
+    candidate = str(raw_value).strip()
+    if not candidate:
+        return placeholder
+
+    if candidate.startswith(("http://", "https://")):
+        return candidate
+
+    normalized = candidate.lstrip("/\\")
+    local_candidates = [normalized]
+    if not normalized.startswith("data/"):
+        local_candidates.append(os.path.join("data", normalized))
+
+    for path in local_candidates:
+        if os.path.isfile(path):
+            return path
+
+    return placeholder
+
 # --- GUI Helper: Render Card ---
 def render_property_card(doc):
-    # Resolve Image Path
-    # Meta has 'images/images/property_X/1.jpg'. We append 'data/' because the app runs from root.
-    image_rel_path = doc.get('image_url', doc.get('image', ''))
-    full_image_path = os.path.join("data", image_rel_path)
-    
-    # Fallback if image doesn't exist
-    if not os.path.exists(full_image_path):
-        # Use a placeholder (online transparent placeholder or local default)
-        display_image = "https://via.placeholder.com/400x300.png?text=No+Image"
-    else:
-        display_image = full_image_path
+    display_image = _resolve_card_image(doc)
 
     # Layout: Image Top, Info Bottom
     with st.container():
@@ -172,51 +251,66 @@ def render_property_card(doc):
         st.image(display_image, use_container_width=True)
         
         # Info Block
+        lat = _safe_float(doc.get("latitude"))
+        lon = _safe_float(doc.get("longitude"))
+        map_link = ""
+        if lat is not None and lon is not None:
+            map_link = f'<a href="https://www.google.com/maps?q={lat},{lon}" target="_blank" class="view-link" style="margin-top:8px;">🗺️ عرض على الخريطة</a>'
+
         st.markdown(f"""
             <div style="padding: 15px;">
-                <div class="price-tag">{doc.get('price', 0):,.0f} EGP</div>
+                <div class="price-tag">{doc.get('price', 0):,.0f} جنيه</div>
                 <div class="location-tag">📍 {doc.get('location', 'Cairo')}</div>
                 <div class="spec-row">
-                    <span class="spec-item">🛏️ {int(doc.get('bedrooms', 0))} Beds</span>
-                    <span class="spec-item">🚿 {int(doc.get('bathrooms', 0))} Baths</span>
-                    <span class="spec-item">📐 {int(doc.get('size', 0))} sqm</span>
+                    <span class="spec-item">🛏️ {int(doc.get('bedrooms', 0))} غرف</span>
+                    <span class="spec-item">🚿 {int(doc.get('bathrooms', 0))} حمام</span>
+                    <span class="spec-item">📐 {int(doc.get('size', 0))} م²</span>
                 </div>
-                <div style="font-size:0.85rem; opacity: 0.7; height:45px; overflow:hidden; margin-bottom:10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                <div class="property-desc">
                     {doc.get('description', '')}
                 </div>
-                <a href="{doc.get('url', '#')}" target="_blank" class="view-link">🔗 View Details</a>
+                <a href="{doc.get('url', '#')}" target="_blank" class="view-link">🔗 عرض التفاصيل</a>
+                {map_link}
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+        if lat is not None and lon is not None:
+            static_map = (
+                "https://staticmap.openstreetmap.de/staticmap.php"
+                f"?center={lat},{lon}&zoom=14&size=600x260&markers={lat},{lon},red-pushpin"
+            )
+            st.image(static_map, use_container_width=True)
 
 # --- Main App Logic ---
 def main():
     # 1. Sidebar
     with st.sidebar:
         st.title("🏙️ Aqar AI")
-        st.caption("Smart Real Estate Assistant")
+        st.caption("المساعد العقاري الذكي")
         st.markdown("---")
         
         # Engine Stats
         try:
             health = requests.get(f"http://127.0.0.1:8000/health", timeout=2)
             if health.status_code == 200:
-                st.metric("Engine Status", "Online", delta="Connected")
+                st.metric("حالة النظام", "شغّال", delta="متصل")
             else:
-                st.error("Engine Disconnected")
+                st.error("الخادم غير متصل")
         except:
-            st.error("Engine Offline")
+            st.error("الخادم متوقف")
         
         st.markdown("---")
         st.markdown("### 💡 Quick Tips")
         st.info(
-            "Try asking:\n"
-            "- 'شقة في التجمع بـ 5 مليون'\n"
-            "- 'فيلا في الساحل قريبة من البحر'\n"
-            "- 'ارخص شقة في زايد'"
+            "جرّب تسأل:\n"
+            "- شقة في التجمع بـ 5 مليون\n"
+            "- فيلا في الساحل قريبة من البحر\n"
+            "- أرخص شقة في زايد"
         )
         if st.button("🔄 Reset Chat", use_container_width=True):
             st.session_state.messages = []
+            st.session_state.session_id = str(uuid.uuid4())
             st.rerun()
 
     # 2. Hero Section / Chat Header
@@ -231,6 +325,8 @@ def main():
             "role": "assistant",
             "content": "يا مرحب! أنا Aqar ❤️\nجاهز أساعدك تلاقي بيت أحلامك أو أفضل فرصة استثمار.\n\nبتدور في منطقة معينة في بالك؟"
         })
+    if "session_id" not in st.session_state:
+        st.session_state.session_id = str(uuid.uuid4())
 
     # 3. Display Chat Flow
     for msg in st.session_state.messages:
@@ -254,15 +350,15 @@ def main():
 
         # Generate Response
         with st.chat_message("assistant"):
-            with st.spinner("Thinking... 🔮"):
+            with st.spinner("جاري التحليل..."):
                 # Hit API
-                api_response = chat_with_api(prompt, session_id="user_streamlit")
+                api_response = chat_with_api(prompt, session_id=st.session_state.session_id)
                 
                 response_text = api_response.get("answer", "")
                 related_docs = api_response.get("properties", [])
                 
-                # B. Check for [SHOW_CARDS] Intent
-                show_cards = False
+                # B. Render cards if backend returned results.
+                show_cards = bool(related_docs)
                 if "[SHOW_CARDS]" in response_text:
                     show_cards = True
                     response_text = response_text.replace("[SHOW_CARDS]", "").strip()
@@ -280,12 +376,11 @@ def main():
                             render_property_card(doc)
                     prop_data = related_docs
                     
-                    # Save context
-                    st.session_state.messages.append({
-                        "role": "assistant", 
-                        "content": response_text,
-                        "properties": prop_data 
-                    })
+                # Save context
+                payload = {"role": "assistant", "content": response_text}
+                if prop_data:
+                    payload["properties"] = prop_data
+                st.session_state.messages.append(payload)
 
 if __name__ == "__main__":
     main()

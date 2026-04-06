@@ -1,5 +1,7 @@
 import os
-from typing import List, Optional
+import csv
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
@@ -20,6 +22,10 @@ class VectorStoreManager:
         self.bm25_model: Optional[BM25Okapi] = None
         self.all_docs_list: List[Document] = []
         self.available_locations = set()
+        self.available_services: Set[str] = set()
+        self.property_lookup: Dict[str, Dict[str, Any]] = {}
+        
+        self._load_property_catalog()
         
         self._load_index()
 
@@ -44,6 +50,7 @@ class VectorStoreManager:
             return HuggingFaceEmbeddings(
                 model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
                 cache_folder=hf_cache_dir,
+                model_kwargs={"device": "cpu"},
             )
         except Exception as e:
             logger.error(f"Failed to initialize embeddings model: {e}")
@@ -71,6 +78,51 @@ class VectorStoreManager:
         else:
             logger.error(f"FAISS Index Path NOT FOUND at: {os.path.abspath(settings.faiss_index_path)}")
 
+    def _load_property_catalog(self):
+        """
+        Loads structured rows from properties.csv to enrich retrieved documents with:
+        - coordinates (lat/lon)
+        - normalized services around each property
+        """
+        try:
+            project_root = Path(__file__).resolve().parents[3]
+            csv_path = project_root / "data" / "properties.csv"
+            if not csv_path.exists():
+                logger.warning(f"properties.csv not found at: {csv_path}")
+                return
+
+            with csv_path.open("r", encoding="utf-8", errors="ignore") as f:
+                reader = csv.DictReader(f)
+                for raw_row in reader:
+                    row = {self._clean_key(k): (v or "").strip() for k, v in raw_row.items()}
+                    url = row.get("url", "")
+                    if not url:
+                        continue
+
+                    services = self._extract_services(row.get("description", ""))
+                    self.available_services.update(services)
+
+                    self.property_lookup[url] = {
+                        "title": row.get("title"),
+                        "location": row.get("location_full_name"),
+                        "type": row.get("property_type"),
+                        "listing_intent": self._infer_listing_intent(url),
+                        "lat": self._safe_float(row.get("lat")),
+                        "lon": self._safe_float(row.get("lon")),
+                        "price": self._safe_float(row.get("price_value")),
+                        "bedrooms": self._safe_float(row.get("bedrooms")),
+                        "bathrooms": self._safe_float(row.get("bathrooms")),
+                        "size": self._safe_float(row.get("size_value")),
+                        "nearby_services": services,
+                    }
+
+            logger.info(
+                f"Loaded property catalog enrichment for {len(self.property_lookup)} listings "
+                f"and discovered {len(self.available_services)} service tags."
+            )
+        except Exception as e:
+            logger.warning(f"Failed to load property catalog enrichment: {e}")
+
     def _extract_dynamic_locations(self):
         """Scans the loaded DB to cache all available canonical locations."""
         try:
@@ -78,6 +130,11 @@ class VectorStoreManager:
                 all_docs = self.vectorstore.docstore._dict.values()
                 for doc in all_docs:
                     loc = doc.metadata.get('location')
+                    if loc:
+                        self.available_locations.add(loc)
+                # Merge raw catalog locations as well (useful when metadata is sparse)
+                for item in self.property_lookup.values():
+                    loc = item.get("location")
                     if loc:
                         self.available_locations.add(loc)
                 logger.info(f"Extracted {len(self.available_locations)} dynamic database locations.")
@@ -138,7 +195,7 @@ class VectorStoreManager:
         sorted_urls = sorted(rrf_scores.keys(), key=lambda url: rrf_scores[url], reverse=True)
         final_docs = [all_intersection_docs[url] for url in sorted_urls]
 
-        return final_docs[:k]
+        return self._enrich_docs(final_docs[:k])
 
     def retrieve(self, query: str, k: int = 100) -> List[Document]:
         """Legacy pass-through (Re-routed to Hybrid internally to prevent codebase rewrites)."""
@@ -148,4 +205,89 @@ class VectorStoreManager:
         """Direct vector similarity search."""
         if not self.vectorstore:
              return []
-        return self.vectorstore.similarity_search(query, k=k)
+        docs = self.vectorstore.similarity_search(query, k=k)
+        return self._enrich_docs(docs)
+
+    def _enrich_docs(self, docs: List[Document]) -> List[Document]:
+        enriched: List[Document] = []
+        for doc in docs:
+            meta = doc.metadata if isinstance(doc.metadata, dict) else {}
+            url = str(meta.get("url", "")).strip()
+            row = self.property_lookup.get(url)
+
+            if row:
+                if not meta.get("title") and row.get("title"):
+                    meta["title"] = row["title"]
+                if not meta.get("location") and row.get("location"):
+                    meta["location"] = row["location"]
+                if not meta.get("type") and row.get("type"):
+                    meta["type"] = row["type"]
+                if not meta.get("listing_intent") and row.get("listing_intent"):
+                    meta["listing_intent"] = row["listing_intent"]
+
+                lat = row.get("lat", 0.0)
+                lon = row.get("lon", 0.0)
+                if lat:
+                    meta["lat"] = lat
+                    meta["latitude"] = lat
+                if lon:
+                    meta["lon"] = lon
+                    meta["longitude"] = lon
+
+                if not meta.get("price") and row.get("price"):
+                    meta["price"] = row["price"]
+                if not meta.get("bedrooms") and row.get("bedrooms"):
+                    meta["bedrooms"] = row["bedrooms"]
+                if not meta.get("bathrooms") and row.get("bathrooms"):
+                    meta["bathrooms"] = row["bathrooms"]
+                if not meta.get("size") and row.get("size"):
+                    meta["size"] = row["size"]
+
+                if not meta.get("nearby_services"):
+                    meta["nearby_services"] = row.get("nearby_services", [])
+            else:
+                # Fallback extraction when URL is missing from catalog.
+                if not meta.get("nearby_services"):
+                    meta["nearby_services"] = self._extract_services(doc.page_content)
+
+            doc.metadata = meta
+            enriched.append(doc)
+        return enriched
+
+    @staticmethod
+    def _infer_listing_intent(url: str) -> str:
+        token = (url or "").lower()
+        if "/rent/" in token:
+            return "rent"
+        if "/buy/" in token:
+            return "buy"
+        return "unknown"
+
+    @staticmethod
+    def _clean_key(value: str) -> str:
+        return (value or "").replace("\ufeff", "").strip()
+
+    @staticmethod
+    def _safe_float(value: Any) -> float:
+        try:
+            return float(value)
+        except Exception:
+            return 0.0
+
+    def _extract_services(self, text: str) -> List[str]:
+        blob = (text or "").lower()
+        service_map = {
+            "security": ["security", "secure", "gated", "حراسة", "امن", "أمن", "كاميرات"],
+            "swimming_pool": ["swimming pool", "pools", "pool", "حمام سباحة", "حمامات سباحة"],
+            "green_spaces": ["green space", "landscaped", "garden", "park", "حدائق", "مساحات خضراء", "لاندسكيب"],
+            "commercial_area": ["commercial", "mall", "shopping", "shops", "تجاري", "مول", "تسوق"],
+            "club_house": ["club house", "clubhouse", "club", "نادي", "كلوب هاوس"],
+            "schools": ["school", "schools", "جامعة", "university", "مدرسة", "مدارس"],
+            "hospitals": ["hospital", "clinic", "medical", "مستشفى", "عيادة", "طبي"],
+            "transport": ["metro", "transport", "bus", "مواصلات", "مترو", "محور", "طريق"],
+        }
+        found: List[str] = []
+        for canonical, keywords in service_map.items():
+            if any(keyword in blob for keyword in keywords):
+                found.append(canonical)
+        return found

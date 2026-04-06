@@ -9,6 +9,7 @@ langchain-groq
 langchain-huggingface
 numpy
 pydantic
+requests
 python-dotenv
 rank-bm25
 sentence-transformers

@@ -5,6 +5,8 @@ RAG-based real estate assistant for the Egyptian market, with:
 - Streamlit frontend (`src/app.py`)
 - Hybrid retrieval (FAISS + BM25)
 - Arabic conversational recommendations
+- Geo-aware ranking (distance + nearby services)
+- Buy/Wait decision with best alternative suggestion (`/api/v1/analyze`)
 
 ## Project Structure
 
@@ -23,6 +25,13 @@ RAG-based real estate assistant for the Egyptian market, with:
 GROQ_API_KEY=gsk_xxx
 # Optional unless Groq is unavailable:
 HUGGINGFACEHUB_API_TOKEN=hf_xxx
+
+# Optional live map intelligence (geocode + nearby services):
+MAP_API_ENABLED=true
+MAP_GEOCODE_URL=https://nominatim.openstreetmap.org/search
+MAP_OVERPASS_URL=https://overpass-api.de/api/interpreter
+MAP_USER_AGENT=AqarAI/2.0
+MAP_CONTACT_EMAIL=you@example.com
 ```
 
 ## Installation
@@ -53,6 +62,8 @@ streamlit run src/app.py
 - `POST /api/v1/chat`
 - `POST /api/v1/search`
 - `POST /api/v1/recommend/similar`
+- `POST /api/v1/analyze`
+- `POST /api/v1/map/live-check`
 - `GET /health`
 - `GET /docs`
 

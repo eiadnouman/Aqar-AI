@@ -2,6 +2,7 @@ import os
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
     """
     Application wide settings managed via Environment Variables.
@@ -16,6 +17,16 @@ class Settings(BaseSettings):
     
     # Internal Paths
     faiss_index_path: str = "data/faiss_index_cloud"
+
+    # Map API integration (optional but recommended for geospatial precision)
+    map_api_enabled: bool = False
+    map_geocode_url: str = "https://nominatim.openstreetmap.org/search"
+    map_overpass_url: str = "https://overpass-api.de/api/interpreter"
+    map_user_agent: str = "AqarAI/2.0 (map-intelligence)"
+    map_contact_email: Optional[str] = None
+    map_timeout_sec: int = 8
+    map_radius_m: int = 2000
+    map_max_docs_per_rank: int = 5
     
     # Application Context
     project_name: str = "Aqar-AI Intelligence API"

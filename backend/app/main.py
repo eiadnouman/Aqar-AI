@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import chat, search, recommend
+from app.api.v1 import chat, search, recommend, analyze, map_tools
 from app.core.config import settings
 
 app = FastAPI(
@@ -22,6 +22,8 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])
 app.include_router(search.router, prefix="/api/v1", tags=["Search"])
 app.include_router(recommend.router, prefix="/api/v1", tags=["Recommend"])
+app.include_router(analyze.router, prefix="/api/v1", tags=["Analyze"])
+app.include_router(map_tools.router, prefix="/api/v1", tags=["Map"])
 
 @app.get("/health", tags=["System"])
 async def health_check():

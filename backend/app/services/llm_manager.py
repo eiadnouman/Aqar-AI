@@ -23,7 +23,7 @@ class LLMManager:
                     temperature=0.2,
                     model_name="openai/gpt-oss-120b",
                     groq_api_key=settings.groq_api_key.strip(),
-                    max_tokens=500,
+                    max_tokens=900,
                     top_p=0.9,
                 )
                 logger.info("Connected to Groq successfully.")
