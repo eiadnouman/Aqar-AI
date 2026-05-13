@@ -1,11 +1,14 @@
 from functools import lru_cache
 import math
+import re
+import time
 from statistics import mean, median
 from typing import Any, Dict, List, Optional, Tuple
 from langchain_core.documents import Document
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 from app.core.logging import logger
+from app.core.config import settings
 from app.services.llm_manager import LLMManager
 from app.services.map_intelligence_service import MapIntelligenceService
 from app.services.vector_store import VectorStoreManager
@@ -25,9 +28,21 @@ class RAGService:
         # In-memory session tracking (Could be upgraded to Redis for production)
         self.sessions = {}
         self.chat_history = {}
+        self.interaction_history: Dict[str, List[Dict[str, Any]]] = {}
+        self.recommendation_cache: Dict[str, Tuple[float, List[Document]]] = {}
 
     def get_recommendation(self, query: str, session_id: str = None) -> Tuple[str, List[Document]]:
         """Handles conversational interaction, processing filters and returning contextual replies."""
+        if self._is_greeting(query):
+            response_text = self._build_greeting_response()
+            if session_id:
+                if session_id not in self.sessions:
+                    self.sessions[session_id] = {}
+                    self.chat_history[session_id] = []
+                self.chat_history[session_id].append(HumanMessage(content=query))
+                self.chat_history[session_id].append(AIMessage(content=response_text))
+            return response_text, []
+
         if not self.vector_store.vectorstore:
             return "System is initializing database, please hold on!", []
 
@@ -159,6 +174,88 @@ class RAGService:
         """Provides direct semantic equivalents to a given property description."""
         return self.vector_store.similarity_search(description, k=k)
 
+    def record_property_interaction(
+        self,
+        session_id: str,
+        property_id: int,
+        event_type: str = "click",
+    ) -> List[int]:
+        """Stores lightweight interest signals for anonymous session recommendations."""
+        normalized_session = str(session_id or "").strip()
+        normalized_property_id = self._safe_int_value(property_id)
+        if not normalized_session or not normalized_property_id:
+            return []
+
+        event = {
+            "property_id": normalized_property_id,
+            "event_type": str(event_type or "click").strip().lower() or "click",
+            "timestamp": time.time(),
+        }
+        events = self.interaction_history.setdefault(normalized_session, [])
+        events.append(event)
+
+        max_events = 50
+        if len(events) > max_events:
+            del events[:-max_events]
+
+        self._invalidate_session_recommendation_cache(normalized_session)
+        return self.get_session_property_ids(normalized_session)
+
+    def get_session_property_ids(self, session_id: str) -> List[int]:
+        seen = set()
+        ordered_ids: List[int] = []
+        for event in self.interaction_history.get(str(session_id or "").strip(), []):
+            property_id = self._safe_int_value(event.get("property_id"))
+            if property_id and property_id not in seen:
+                ordered_ids.append(property_id)
+                seen.add(property_id)
+        return ordered_ids
+
+    def recommend_from_interactions(
+        self,
+        session_id: str,
+        property_ids: Optional[List[int]] = None,
+        limit: int = 5,
+    ) -> List[Document]:
+        """Builds recommendations from clicked/favorited properties with TTL caching."""
+        normalized_session = str(session_id or "").strip()
+        explicit_ids = [self._safe_int_value(item) for item in (property_ids or [])]
+        explicit_ids = [item for item in explicit_ids if item]
+        seed_ids = self._unique_ordered(self.get_session_property_ids(normalized_session) + explicit_ids)
+        if not seed_ids:
+            return []
+
+        limit = max(1, min(int(limit or 5), 20))
+        cache_key = f"{normalized_session}:{','.join(map(str, seed_ids))}:{limit}"
+        cached = self.recommendation_cache.get(cache_key)
+        if cached and time.time() - cached[0] <= settings.interaction_cache_ttl_sec:
+            return cached[1]
+
+        seed_docs = self.vector_store.get_docs_by_property_ids(seed_ids)
+        if not seed_docs:
+            return []
+
+        seed_text = "\n\n".join(
+            [
+                self._recommendation_seed_text(doc)
+                for doc in seed_docs[-8:]
+            ]
+        )
+        candidates = self.vector_store.similarity_search(seed_text, k=limit + len(seed_ids) + 15)
+        excluded = set(seed_ids)
+        recommendations: List[Document] = []
+        for doc in candidates:
+            doc_id = self._doc_property_id(doc)
+            if doc_id in excluded:
+                continue
+            recommendations.append(doc)
+            if len(recommendations) >= limit:
+                break
+
+        self.recommendation_cache[cache_key] = (time.time(), recommendations)
+        self._trim_recommendation_cache()
+        return recommendations
+
     def analyze_market(self, query: Optional[str] = None, explicit_filters: Dict = None) -> Dict[str, Any]:
         """
         Generates numerical market insights from matched inventory rather than conversational output.
@@ -288,6 +385,35 @@ class RAGService:
         if not isinstance(filters, dict):
             return False
         return any(value not in (None, "", [], {}) for value in filters.values())
+
+    @staticmethod
+    def _is_greeting(query: str) -> bool:
+        normalized = re.sub(r"[\s،,.!؟?]+", " ", str(query or "").strip().lower()).strip()
+        if not normalized:
+            return False
+        greeting_phrases = {
+            "اهلا",
+            "أهلا",
+            "اهلا بيك",
+            "أهلا بيك",
+            "السلام عليكم",
+            "سلام عليكم",
+            "ازيك",
+            "إزيك",
+            "هاي",
+            "هالو",
+            "hello",
+            "hi",
+            "hey",
+        }
+        return normalized in {phrase.lower() for phrase in greeting_phrases}
+
+    @staticmethod
+    def _build_greeting_response() -> str:
+        return (
+            "أهلاً بيك! أنا AqarAI، أقدر أساعدك تلاقي شقة أو عقار مناسب. "
+            "اكتبلي المنطقة والميزانية وعدد الغرف، وأنا أطلعلك أفضل الاختيارات المتاحة."
+        )
 
     def _is_inventory_stats_intent(self, query: str, filters: Optional[Dict[str, Any]] = None) -> bool:
         raw_query = str(query or "").strip().lower()
@@ -1399,6 +1525,54 @@ class RAGService:
             return float(value)
         except Exception:
             return 0.0
+
+    @staticmethod
+    def _safe_int_value(value: Any) -> int:
+        try:
+            return int(float(value))
+        except Exception:
+            return 0
+
+    @staticmethod
+    def _unique_ordered(values: List[int]) -> List[int]:
+        seen = set()
+        unique: List[int] = []
+        for value in values:
+            if value and value not in seen:
+                unique.append(value)
+                seen.add(value)
+        return unique
+
+    def _doc_property_id(self, doc: Document) -> int:
+        meta = doc.metadata if isinstance(doc.metadata, dict) else {}
+        return self._safe_int_value(meta.get("property_id") or meta.get("id"))
+
+    @staticmethod
+    def _recommendation_seed_text(doc: Document) -> str:
+        meta = doc.metadata if isinstance(doc.metadata, dict) else {}
+        return (
+            f"Title: {meta.get('title', '')}\n"
+            f"Location: {meta.get('location', '')}\n"
+            f"Type: {meta.get('type', '')}\n"
+            f"Price: {meta.get('price', '')}\n"
+            f"Bedrooms: {meta.get('bedrooms', '')}\n"
+            f"Size: {meta.get('size', '')}\n"
+            f"{doc.page_content}"
+        )
+
+    def _invalidate_session_recommendation_cache(self, session_id: str):
+        prefix = f"{session_id}:"
+        for key in list(self.recommendation_cache.keys()):
+            if key.startswith(prefix):
+                self.recommendation_cache.pop(key, None)
+
+    def _trim_recommendation_cache(self):
+        max_entries = 500
+        if len(self.recommendation_cache) <= max_entries:
+            return
+        sorted_items = sorted(self.recommendation_cache.items(), key=lambda item: item[1][0])
+        for key, _ in sorted_items[: len(self.recommendation_cache) - max_entries]:
+            self.recommendation_cache.pop(key, None)
 
     def _enforce_padding_logic(self, query, filters, filtered_docs, raw_docs):
         """

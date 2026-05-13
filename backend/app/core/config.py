@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     map_timeout_sec: int = 8
     map_radius_m: int = 2000
     map_max_docs_per_rank: int = 5
+
+    # Optional sync from the graduation_project_api service
+    external_api_base_url: Optional[str] = None
+    internal_api_key: Optional[str] = None
+    external_api_timeout_sec: int = 5
+    property_public_base_url: Optional[str] = None
+    interaction_cache_ttl_sec: int = 3600
+    cors_allowed_origins: str = "*"
     
     # Application Context
     project_name: str = "Aqar-AI Intelligence API"

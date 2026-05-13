@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import chat, search, recommend, analyze, map_tools
+from app.api.v1 import chat, search, recommend, analyze, map_tools, interactions
 from app.core.config import settings
 
 app = FastAPI(
@@ -10,10 +10,18 @@ app = FastAPI(
 )
 
 # CORS configuration
+def _cors_origins():
+    raw = (settings.cors_allowed_origins or "*").strip()
+    if raw == "*":
+        return ["*"]
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+cors_origins = _cors_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=cors_origins != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -24,6 +32,7 @@ app.include_router(search.router, prefix="/api/v1", tags=["Search"])
 app.include_router(recommend.router, prefix="/api/v1", tags=["Recommend"])
 app.include_router(analyze.router, prefix="/api/v1", tags=["Analyze"])
 app.include_router(map_tools.router, prefix="/api/v1", tags=["Map"])
+app.include_router(interactions.router, prefix="/api/v1", tags=["Interactions"])
 
 @app.get("/health", tags=["System"])
 async def health_check():

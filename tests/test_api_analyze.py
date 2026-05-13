@@ -77,4 +77,6 @@ async def test_analyze_handler_returns_aggregations_and_sample_properties():
     assert response.buy_decision.decision == "buy_now"
     assert response.better_option_found is True
     assert response.better_option is not None
+    assert response.better_option.id == 1
     assert len(response.sample_properties) == 1
+    assert response.sample_properties[0].id == 1

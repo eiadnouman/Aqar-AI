@@ -3,6 +3,7 @@ from typing import List, Optional, Dict, Any
 
 class Property(BaseModel):
     """Schema representing a Real Estate property."""
+    id: Optional[int] = Field(None, description="Internal property ID, when available")
     title: str
     location: str
     price: float
@@ -47,10 +48,33 @@ class SearchResponse(BaseModel):
 class RecommendRequest(BaseModel):
     """Payload for semantic similarity searches."""
     property_description: str = Field(..., description="Text description of the target property")
+    session_id: Optional[str] = Field(None, description="Optional session ID for interaction-aware ranking")
+    property_ids: Optional[List[int]] = Field(None, description="Optional clicked/favorited property IDs")
 
 class RecommendResponse(BaseModel):
     """Response containing similar properties."""
     properties: List[Property]
+
+
+class PropertyInteractionRequest(BaseModel):
+    """Payload for storing lightweight user interest signals."""
+    session_id: str = Field(..., description="Anonymous or authenticated session ID")
+    property_id: int = Field(..., description="Property ID the user interacted with")
+    event_type: str = Field("click", description="Interaction type such as click, save, view")
+
+
+class PropertyInteractionResponse(BaseModel):
+    """Response after saving an interaction event."""
+    saved: bool
+    session_id: str
+    property_ids: List[int]
+
+
+class SessionRecommendRequest(BaseModel):
+    """Payload for recommendations from session interaction history."""
+    session_id: str = Field(..., description="Session ID with stored property interactions")
+    property_ids: Optional[List[int]] = Field(None, description="Optional additional property IDs")
+    limit: int = Field(5, ge=1, le=20, description="Maximum properties to return")
 
 
 class AnalyzeRequest(BaseModel):

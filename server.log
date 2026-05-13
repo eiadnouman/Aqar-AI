@@ -1,56 +1,66 @@
-INFO:     Started server process [73305]
+INFO:     Started server process [67567]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:49106 - "GET /health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:37446 - "GET /health HTTP/1.1" 200 OK
-2026-04-06 18:30:57,677 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
-/storage/Graduation Project/Aqar-AI/venv/lib/python3.12/site-packages/pydantic/main.py:250: UserWarning: WARNING! top_p is not default parameter.
+INFO:     127.0.0.1:43300 - "GET /health HTTP/1.1" 200 OK
+2026-05-13 16:59:54,442 - aqarai - INFO - Connecting to Native Groq (openai/gpt-oss-120b)...
+/home/eiad/Projects/Aqar-AI/venv/lib64/python3.14/site-packages/pydantic/main.py:263: UserWarning: WARNING! top_p is not default parameter.
                     top_p was transferred to model_kwargs.
                     Please confirm that top_p is what you intended.
   validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
-2026-04-06 18:30:57,856 - aqarai - INFO - Connected to Groq successfully.
-2026-04-06 18:31:00,547 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: intfloat/multilingual-e5-small
-2026-04-06 18:31:05,061 - aqarai - INFO - Loaded property catalog enrichment for 141 listings and discovered 8 service tags.
-2026-04-06 18:31:05,063 - faiss.loader - INFO - Loading faiss with AVX2 support.
-2026-04-06 18:31:05,091 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
-2026-04-06 18:31:05,100 - aqarai - INFO - Vector Database loaded successfully.
-2026-04-06 18:31:05,100 - aqarai - INFO - Extracted 88 dynamic database locations.
-2026-04-06 18:31:05,115 - aqarai - INFO - BM25 Keyword Index initialized successfully.
-2026-04-06 18:31:05,115 - aqarai - INFO - Processing Chat Request: ايه الاخبار (Session: 5e7a5612-0886-4251-a87e-29028eb9cd6a)
-2026-04-06 18:31:05,693 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
-2026-04-06 18:31:05,694 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أهلاً وسهلاً! كل شيء تمام، كيف يمكنني مساعدتك اليوم في البحث عن عقار؟'}}. Falling back to Regex constraints.
-2026-04-06 18:31:06,034 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
-INFO:     127.0.0.1:37452 - "POST /api/v1/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50494 - "GET /health HTTP/1.1" 200 OK
-2026-04-06 18:31:21,888 - aqarai - INFO - Processing Chat Request: عاوز شقة كويسة في التجمع 3 غرف يكون حواليها خدمات (Session: 5e7a5612-0886-4251-a87e-29028eb9cd6a)
-2026-04-06 18:31:23,171 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
-2026-04-06 18:31:23,173 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment', 'desired_services': ['club_house', 'commercial_area', 'green_spaces', 'hospitals', 'schools', 'security', 'swimming_pool', 'transport']}
-2026-04-06 18:31:23,173 - aqarai - INFO - Active Merged Filters applied: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'property_type': 'apartment', 'desired_services': ['club_house', 'commercial_area', 'green_spaces', 'hospitals', 'schools', 'security', 'swimming_pool', 'transport'], 'max_bedrooms': 4}
-2026-04-06 18:31:32,260 - aqarai - WARNING - Nearby services API failed for (30.02259635925293, 31.545814514160156): HTTPSConnectionPool(host='overpass-api.de', port=443): Read timed out. (read timeout=8)
-2026-04-06 18:31:37,495 - aqarai - WARNING - Nearby services API failed for (30.073923110961914, 31.465532302856445): 504 Server Error: Gateway Timeout for url: https://overpass-api.de/api/interpreter
-2026-04-06 18:31:39,932 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
-INFO:     127.0.0.1:50510 - "POST /api/v1/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:38416 - "GET /health HTTP/1.1" 200 OK
-2026-04-06 18:31:58,411 - aqarai - INFO - Processing Chat Request: قارن بينهم (Session: 5e7a5612-0886-4251-a87e-29028eb9cd6a)
-2026-04-06 18:31:59,709 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
-2026-04-06 18:31:59,710 - aqarai - WARNING - Native Function Calling failed: Error code: 400 - {'error': {'message': 'Tool choice is required, but model did not call a tool', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': 'أحتاج إلى بعض التفاصيل الإضافية لأتمكّن من مساعدتك بشكل دقيق:\n\n1. **ما هو نوع العقار الذي تريد مقارنته؟** (مثلاً شقة، فيلا، بيت، شاليه، إلخ)  \n2. **هل تبحث عن مقارنة للشراء أم للإيجار؟**  \n3. **ما هي المناطق أو الأحياء التي تهمك؟** (يمكنك ذكر اسم الحي أو المدينة أو أي تفاصيل إقليمية)  \n4. **هل لديك ميزانية محددة أو عدد غرف تريد أن تكون ضمن النطاق؟**  \n5. **هل هناك خدمات معينة تريد توافرها في العقار (مثل نادي، حمام سباحة، مدارس، مستشفيات، أمان، مساحات خضراء، أو قرب وسائل النقل)؟**\n\nبمجرد تزويدي بهذه المعلومات، سأستطيع إعداد الفلاتر المناسبة ومقارنة العقارات التي تلبي احتياجاتك.'}}. Falling back to Regex constraints.
-2026-04-06 18:32:01,821 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
-INFO:     127.0.0.1:38428 - "POST /api/v1/chat HTTP/1.1" 200 OK
-INFO:     127.0.0.1:33536 - "GET /health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:46682 - "GET /health HTTP/1.1" 200 OK
-2026-04-06 18:45:14,488 - aqarai - INFO - Processing Chat Request: عاوز شقة 3 غرف في التجمع (Session: 34d39645-8e0d-409f-a9a1-c2378bb82c5e)
-2026-04-06 18:45:16,223 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
-2026-04-06 18:45:16,225 - aqarai - INFO - Tool Calling Extracted Filters: {'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
-2026-04-06 18:45:16,225 - aqarai - INFO - Active Merged Filters applied: {'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment', 'location': 'Cairo'}
-2026-04-06 18:45:24,917 - aqarai - WARNING - Nearby services API failed for (29.995922088623047, 31.554126739501953): HTTPSConnectionPool(host='overpass-api.de', port=443): Read timed out. (read timeout=8)
-2026-04-06 18:45:27,315 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
-INFO:     127.0.0.1:46686 - "POST /api/v1/chat HTTP/1.1" 200 OK
-alling back to Regex constraints.
-2026-04-06 18:32:01,821 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
-2026-04-06 18:45:14,488 - aqarai - INFO - Processing Chat Request: عاوز شقة 3 غرف في التجمع (Session: 34d39645-8e0d-409f-a9a1-c2378bb82c5e)
-2026-04-06 18:45:16,223 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
-2026-04-06 18:45:16,225 - aqarai - INFO - Tool Calling Extracted Filters: {'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
-2026-04-06 18:45:16,225 - aqarai - INFO - Active Merged Filters applied: {'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment', 'location': 'Cairo'}
-2026-04-06 18:45:24,917 - aqarai - WARNING - Nearby services API failed for (29.995922088623047, 31.554126739501953): HTTPSConnectionPool(host='overpass-api.de', port=443): Read timed out. (read timeout=8)
-2026-04-06 18:45:27,315 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-13 16:59:54,542 - aqarai - INFO - Connected to Groq successfully.
+2026-05-13 16:59:57,484 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 16:59:57,504 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/modules.json "HTTP/1.1 200 OK"
+2026-05-13 16:59:57,681 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/config_sentence_transformers.json "HTTP/1.1 404 Not Found"
+2026-05-13 16:59:57,682 - sentence_transformers.base.model - INFO - Loading SentenceTransformer model from intfloat/multilingual-e5-small.
+2026-05-13 16:59:57,875 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/config_sentence_transformers.json "HTTP/1.1 404 Not Found"
+2026-05-13 16:59:58,061 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 16:59:58,105 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/README.md "HTTP/1.1 200 OK"
+2026-05-13 16:59:58,286 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 16:59:58,309 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/modules.json "HTTP/1.1 200 OK"
+2026-05-13 16:59:58,517 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 16:59:58,538 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-05-13 16:59:58,722 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-05-13 16:59:58,902 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 16:59:58,925 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/config.json "HTTP/1.1 200 OK"
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 2889.71it/s]
+2026-05-13 16:59:59,286 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-05-13 16:59:59,464 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-05-13 16:59:59,645 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-05-13 16:59:59,821 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-05-13 17:00:00,002 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 17:00:00,040 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-13 17:00:00,220 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 17:00:00,241 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/config.json "HTTP/1.1 200 OK"
+2026-05-13 17:00:00,425 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 17:00:00,447 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/config.json "HTTP/1.1 200 OK"
+2026-05-13 17:00:00,631 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 17:00:00,651 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-13 17:00:00,842 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 17:00:00,863 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-05-13 17:00:01,041 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/intfloat/multilingual-e5-small/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-05-13 17:00:01,292 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/intfloat/multilingual-e5-small/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-05-13 17:00:02,879 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/intfloat/multilingual-e5-small "HTTP/1.1 200 OK"
+2026-05-13 17:00:03,370 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/intfloat/multilingual-e5-small/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-05-13 17:00:03,390 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/intfloat/multilingual-e5-small/614241f622f53c4eeff9890bdc4f31cfecc418b3/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-05-13 17:00:03,619 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/intfloat/multilingual-e5-small "HTTP/1.1 200 OK"
+2026-05-13 17:00:03,829 - aqarai - WARNING - properties.csv not found at: /home/eiad/Projects/Aqar-AI/data/properties.csv
+2026-05-13 17:00:03,923 - aqarai - INFO - Loaded 142 active properties from external API sync.
+2026-05-13 17:00:03,923 - aqarai - INFO - Loaded property catalog enrichment for 0 URL listings and 277 signature matches.
+2026-05-13 17:00:03,928 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-05-13 17:00:04,019 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-05-13 17:00:04,028 - aqarai - INFO - Vector Database loaded successfully.
+2026-05-13 17:00:04,028 - aqarai - INFO - Extracted 89 dynamic database locations.
+2026-05-13 17:00:04,038 - aqarai - INFO - BM25 Keyword Index initialized successfully.
+INFO:     127.0.0.1:43302 - "POST /api/v1/interactions/property-click HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46192 - "POST /api/v1/recommend/session HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46062 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46062 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40800 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40800 - "GET /openapi.json HTTP/1.1" 200 OK
+2026-05-13 17:03:13,184 - aqarai - INFO - Processing Chat Request: عاوز شقة 3 غرف في التجمع الخامس (Session: string)
+2026-05-13 17:03:14,391 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-13 17:03:14,430 - aqarai - INFO - Tool Calling Extracted Filters: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
+2026-05-13 17:03:14,431 - aqarai - INFO - Active Merged Filters applied: {'location': 'The 5th Settlement', 'min_bedrooms': 3, 'max_bedrooms': 3, 'property_type': 'apartment'}
+2026-05-13 17:03:16,424 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:34194 - "POST /api/v1/chat HTTP/1.1" 200 OK

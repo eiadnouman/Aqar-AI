@@ -2,6 +2,7 @@ import os
 import csv
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
+import requests
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
@@ -24,6 +25,7 @@ class VectorStoreManager:
         self.available_locations = set()
         self.available_services: Set[str] = set()
         self.property_lookup: Dict[str, Dict[str, Any]] = {}
+        self.property_signature_lookup: Dict[str, Dict[str, Any]] = {}
         
         self._load_property_catalog()
         
@@ -84,44 +86,112 @@ class VectorStoreManager:
         - coordinates (lat/lon)
         - normalized services around each property
         """
+        project_root = Path(__file__).resolve().parents[3]
+        csv_path = project_root / "data" / "properties.csv"
+
+        if csv_path.exists():
+            try:
+                with csv_path.open("r", encoding="utf-8", errors="ignore") as f:
+                    reader = csv.DictReader(f)
+                    for raw_row in reader:
+                        row = {self._clean_key(k): (v or "").strip() for k, v in raw_row.items()}
+                        self._remember_catalog_row(self._catalog_row_from_csv(row))
+            except Exception as e:
+                logger.warning(f"Failed to load CSV property catalog enrichment: {e}")
+        else:
+            logger.warning(f"properties.csv not found at: {csv_path}")
+
+        self._load_external_property_catalog()
+
+        logger.info(
+            f"Loaded property catalog enrichment for {len(self.property_lookup)} URL listings "
+            f"and {len(self.property_signature_lookup)} signature matches."
+        )
+
+    def _load_external_property_catalog(self):
+        """Optionally enrich from graduation_project_api /internal/ai-sync."""
+        base_url = (settings.external_api_base_url or "").rstrip("/")
+        api_key = (settings.internal_api_key or "").strip()
+        if not base_url or not api_key:
+            return
+
         try:
-            project_root = Path(__file__).resolve().parents[3]
-            csv_path = project_root / "data" / "properties.csv"
-            if not csv_path.exists():
-                logger.warning(f"properties.csv not found at: {csv_path}")
-                return
-
-            with csv_path.open("r", encoding="utf-8", errors="ignore") as f:
-                reader = csv.DictReader(f)
-                for raw_row in reader:
-                    row = {self._clean_key(k): (v or "").strip() for k, v in raw_row.items()}
-                    url = row.get("url", "")
-                    if not url:
-                        continue
-
-                    services = self._extract_services(row.get("description", ""))
-                    self.available_services.update(services)
-
-                    self.property_lookup[url] = {
-                        "title": row.get("title"),
-                        "location": row.get("location_full_name"),
-                        "type": row.get("property_type"),
-                        "listing_intent": self._infer_listing_intent(url),
-                        "lat": self._safe_float(row.get("lat")),
-                        "lon": self._safe_float(row.get("lon")),
-                        "price": self._safe_float(row.get("price_value")),
-                        "bedrooms": self._safe_float(row.get("bedrooms")),
-                        "bathrooms": self._safe_float(row.get("bathrooms")),
-                        "size": self._safe_float(row.get("size_value")),
-                        "nearby_services": services,
-                    }
-
-            logger.info(
-                f"Loaded property catalog enrichment for {len(self.property_lookup)} listings "
-                f"and discovered {len(self.available_services)} service tags."
+            response = requests.get(
+                f"{base_url}/internal/ai-sync",
+                headers={"x-api-key": api_key},
+                timeout=settings.external_api_timeout_sec,
             )
+            response.raise_for_status()
+            rows = response.json()
+            if not isinstance(rows, list):
+                logger.warning("External property sync returned a non-list payload.")
+                return
+            for raw_row in rows:
+                if isinstance(raw_row, dict):
+                    self._remember_catalog_row(self._catalog_row_from_external(raw_row))
+            logger.info(f"Loaded {len(rows)} active properties from external API sync.")
         except Exception as e:
-            logger.warning(f"Failed to load property catalog enrichment: {e}")
+            logger.warning(f"External property sync unavailable: {e}")
+
+    def _catalog_row_from_csv(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        url = row.get("url", "")
+        description = row.get("description", "")
+        return {
+            "property_id": self._safe_int(row.get("property_id") or row.get("id") or row.get("source_index")),
+            "url": url,
+            "title": row.get("title"),
+            "description": description,
+            "location": row.get("location_full_name"),
+            "type": row.get("property_type"),
+            "listing_intent": self._infer_listing_intent(url),
+            "lat": self._safe_float(row.get("lat")),
+            "lon": self._safe_float(row.get("lon")),
+            "price": self._safe_float(row.get("price_value")),
+            "bedrooms": self._safe_float(row.get("bedrooms")),
+            "bathrooms": self._safe_float(row.get("bathrooms")),
+            "size": self._safe_float(row.get("size_value")),
+            "nearby_services": self._extract_services(description),
+        }
+
+    def _catalog_row_from_external(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        description = row.get("property_desc", "") or row.get("description", "")
+        image = self._first_image(row.get("images"))
+        property_type = row.get("property_type", "")
+        return {
+            "property_id": self._safe_int(row.get("property_id") or row.get("id")),
+            "url": row.get("url", ""),
+            "title": row.get("property_name") or row.get("title"),
+            "description": description,
+            "location": row.get("location") or row.get("location_full_name"),
+            "type": row.get("category") or row.get("unit_type") or row.get("real_estate_type") or "",
+            "listing_intent": self._infer_listing_intent_from_type(property_type),
+            "lat": self._safe_float(row.get("latitude") or row.get("lat")),
+            "lon": self._safe_float(row.get("longitude") or row.get("lon")),
+            "price": self._safe_float(row.get("price_value") or row.get("price_per_day")),
+            "bedrooms": self._safe_float(row.get("bedrooms_no") or row.get("bedrooms")),
+            "bathrooms": self._safe_float(row.get("bathrooms_no") or row.get("bathrooms")),
+            "size": self._safe_float(row.get("size") or row.get("size_value")),
+            "image": image,
+            "nearby_services": self._extract_services(description),
+        }
+
+    def _remember_catalog_row(self, row: Dict[str, Any]):
+        if not row:
+            return
+
+        url = str(row.get("url") or "").strip()
+        if url:
+            self.property_lookup[url] = row
+
+        location = row.get("location")
+        if location:
+            self.available_locations.add(location)
+
+        services = row.get("nearby_services") or []
+        self.available_services.update(services)
+
+        for signature in self._catalog_signatures(row.get("title"), row.get("description"), location):
+            self.property_signature_lookup.setdefault(signature, row)
 
     def _extract_dynamic_locations(self):
         """Scans the loaded DB to cache all available canonical locations."""
@@ -208,14 +278,40 @@ class VectorStoreManager:
         docs = self.vectorstore.similarity_search(f"query: {query}", k=k)
         return self._enrich_docs(docs)
 
+    def get_doc_by_property_id(self, property_id: int) -> Optional[Document]:
+        """Finds a document by internal property_id from the in-memory docstore."""
+        if not property_id or not self.all_docs_list:
+            return None
+        for doc in self.all_docs_list:
+            meta = doc.metadata if isinstance(doc.metadata, dict) else {}
+            if self._safe_int(meta.get("property_id") or meta.get("id")) == property_id:
+                return self._enrich_docs([doc])[0]
+        return None
+
+    def get_docs_by_property_ids(self, property_ids: List[int]) -> List[Document]:
+        docs: List[Document] = []
+        seen = set()
+        for property_id in property_ids:
+            normalized_id = self._safe_int(property_id)
+            if not normalized_id or normalized_id in seen:
+                continue
+            doc = self.get_doc_by_property_id(normalized_id)
+            if doc:
+                docs.append(doc)
+                seen.add(normalized_id)
+        return docs
+
     def _enrich_docs(self, docs: List[Document]) -> List[Document]:
         enriched: List[Document] = []
         for doc in docs:
             meta = doc.metadata if isinstance(doc.metadata, dict) else {}
             url = str(meta.get("url", "")).strip()
-            row = self.property_lookup.get(url)
+            row = self.property_lookup.get(url) or self._find_catalog_row_for_doc(doc, meta)
 
             if row:
+                if not meta.get("property_id") and row.get("property_id"):
+                    meta["property_id"] = row["property_id"]
+                    meta["id"] = row["property_id"]
                 if not meta.get("title") and row.get("title"):
                     meta["title"] = row["title"]
                 if not meta.get("location") and row.get("location"):
@@ -245,6 +341,8 @@ class VectorStoreManager:
 
                 if not meta.get("nearby_services"):
                     meta["nearby_services"] = row.get("nearby_services", [])
+                if not meta.get("image") and row.get("image"):
+                    meta["image"] = row["image"]
             else:
                 # Fallback extraction when URL is missing from catalog.
                 if not meta.get("nearby_services"):
@@ -254,12 +352,45 @@ class VectorStoreManager:
             enriched.append(doc)
         return enriched
 
+    def _find_catalog_row_for_doc(self, doc: Document, meta: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        location = meta.get("location")
+        title = meta.get("title")
+        description = self._description_from_page(doc.page_content)
+        for signature in self._catalog_signatures(title, description, location):
+            row = self.property_signature_lookup.get(signature)
+            if row:
+                return row
+        return None
+
+    def _catalog_signatures(self, title: Any, description: Any, location: Any) -> List[str]:
+        normalized_location = self._normalize_text(location)
+        signatures: List[str] = []
+
+        normalized_title = self._normalize_text(title)
+        if normalized_title and normalized_location:
+            signatures.append(f"title:{normalized_title}|loc:{normalized_location}")
+
+        normalized_desc = self._normalize_text(description)
+        if normalized_desc and normalized_location:
+            signatures.append(f"desc:{normalized_desc[:180]}|loc:{normalized_location}")
+
+        return signatures
+
     @staticmethod
     def _infer_listing_intent(url: str) -> str:
         token = (url or "").lower()
         if "/rent/" in token:
             return "rent"
         if "/buy/" in token:
+            return "buy"
+        return "unknown"
+
+    @staticmethod
+    def _infer_listing_intent_from_type(property_type: str) -> str:
+        token = (property_type or "").lower()
+        if token in {"for_rent", "rent", "rental"}:
+            return "rent"
+        if token in {"for_sale", "sale", "buy"}:
             return "buy"
         return "unknown"
 
@@ -273,6 +404,43 @@ class VectorStoreManager:
             return float(value)
         except Exception:
             return 0.0
+
+    @staticmethod
+    def _safe_int(value: Any) -> int:
+        try:
+            return int(float(value))
+        except Exception:
+            return 0
+
+    @staticmethod
+    def _normalize_text(value: Any) -> str:
+        return " ".join(str(value or "").lower().split())
+
+    @staticmethod
+    def _description_from_page(page_content: str) -> str:
+        text = str(page_content or "")
+        marker = "Description:"
+        if marker in text:
+            return text.split(marker, 1)[-1].strip()
+        return text.strip()
+
+    @staticmethod
+    def _first_image(value: Any) -> str:
+        if isinstance(value, list) and value:
+            return str(value[0])
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped.startswith("["):
+                try:
+                    import json
+
+                    parsed = json.loads(stripped)
+                    if isinstance(parsed, list) and parsed:
+                        return str(parsed[0])
+                except Exception:
+                    return stripped
+            return stripped
+        return ""
 
     def _extract_services(self, text: str) -> List[str]:
         blob = (text or "").lower()

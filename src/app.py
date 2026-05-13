@@ -3,6 +3,7 @@ import os
 import requests
 import logging
 import uuid
+import html
 from dotenv import load_dotenv
 
 # Setup Logging
@@ -190,6 +191,7 @@ st.markdown(ST_STYLE, unsafe_allow_html=True)
 
 # --- API Connection Helper ---
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
+API_ROOT_URL = API_BASE_URL.rsplit("/api/v1", 1)[0]
 
 def chat_with_api(message: str, session_id: str = "default_session"):
     try:
@@ -209,6 +211,38 @@ def chat_with_api(message: str, session_id: str = "default_session"):
     except requests.exceptions.RequestException as e:
         logger.error(f"API Error: {e}")
         return {"answer": "معلش السيرفر مش شغال دلوقتي، تأكد إن الباك-إند شغال.", "properties": []}
+
+
+def track_property_interest(session_id: str, property_id: int):
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/interactions/property-click",
+            json={
+                "session_id": session_id,
+                "property_id": property_id,
+                "event_type": "save_interest",
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Interaction API Error: {e}")
+        return {"saved": False, "property_ids": []}
+
+
+def get_session_recommendations(session_id: str, limit: int = 5):
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/recommend/session",
+            json={"session_id": session_id, "limit": limit},
+            timeout=20,
+        )
+        response.raise_for_status()
+        return response.json().get("properties", [])
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Session recommendation API Error: {e}")
+        return []
 
 
 def _safe_float(value):
@@ -240,8 +274,12 @@ def _resolve_card_image(doc):
     return placeholder
 
 # --- GUI Helper: Render Card ---
-def render_property_card(doc):
+def render_property_card(doc, key_suffix="card"):
     display_image = _resolve_card_image(doc)
+    property_id = doc.get("id")
+    safe_location = html.escape(str(doc.get("location", "Cairo")))
+    safe_description = html.escape(str(doc.get("description", "")))
+    safe_url = html.escape(str(doc.get("url", "#")), quote=True)
 
     # Layout: Image Top, Info Bottom
     with st.container():
@@ -260,20 +298,43 @@ def render_property_card(doc):
         st.markdown(f"""
             <div style="padding: 15px;">
                 <div class="price-tag">{doc.get('price', 0):,.0f} جنيه</div>
-                <div class="location-tag">📍 {doc.get('location', 'Cairo')}</div>
+                <div class="location-tag">📍 {safe_location}</div>
                 <div class="spec-row">
                     <span class="spec-item">🛏️ {int(doc.get('bedrooms', 0))} غرف</span>
                     <span class="spec-item">🚿 {int(doc.get('bathrooms', 0))} حمام</span>
                     <span class="spec-item">📐 {int(doc.get('size', 0))} م²</span>
                 </div>
                 <div class="property-desc">
-                    {doc.get('description', '')}
+                    {safe_description}
                 </div>
-                <a href="{doc.get('url', '#')}" target="_blank" class="view-link">🔗 عرض التفاصيل</a>
+                <a href="{safe_url}" target="_blank" class="view-link">🔗 عرض التفاصيل</a>
                 {map_link}
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+        if property_id:
+            interest_key = f"interest_{st.session_state.session_id}_{property_id}_{key_suffix}"
+            if st.button("⭐ مهتم", key=interest_key, use_container_width=True):
+                tracked = track_property_interest(st.session_state.session_id, int(property_id))
+                st.session_state.interested_property_ids = tracked.get("property_ids", [])
+                recs = get_session_recommendations(st.session_state.session_id)
+                if recs:
+                    st.session_state.messages.append(
+                        {
+                            "role": "assistant",
+                            "content": "حفظت اهتمامك. دي ترشيحات قريبة من اختياراتك الأخيرة:",
+                            "properties": recs,
+                        }
+                    )
+                else:
+                    st.session_state.messages.append(
+                        {
+                            "role": "assistant",
+                            "content": "حفظت اهتمامك. اختار شقة كمان علشان أحسن الترشيحات.",
+                        }
+                    )
+                st.rerun()
 
         if lat is not None and lon is not None:
             static_map = (
@@ -292,7 +353,7 @@ def main():
         
         # Engine Stats
         try:
-            health = requests.get(f"http://127.0.0.1:8000/health", timeout=2)
+            health = requests.get(f"{API_ROOT_URL}/health", timeout=2)
             if health.status_code == 200:
                 st.metric("حالة النظام", "شغّال", delta="متصل")
             else:
@@ -310,6 +371,7 @@ def main():
         )
         if st.button("🔄 Reset Chat", use_container_width=True):
             st.session_state.messages = []
+            st.session_state.interested_property_ids = []
             st.session_state.session_id = str(uuid.uuid4())
             st.rerun()
 
@@ -327,9 +389,11 @@ def main():
         })
     if "session_id" not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
+    if "interested_property_ids" not in st.session_state:
+        st.session_state.interested_property_ids = []
 
     # 3. Display Chat Flow
-    for msg in st.session_state.messages:
+    for msg_idx, msg in enumerate(st.session_state.messages):
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             # If this message has attached property cards, render them
@@ -339,7 +403,7 @@ def main():
                 cols = st.columns(3)
                 for i, doc in enumerate(msg["properties"]):
                     with cols[i % 3]:
-                        render_property_card(doc)
+                        render_property_card(doc, key_suffix=f"history_{msg_idx}_{i}")
 
     # 4. Handle User Input
     if prompt := st.chat_input("اكتب طلبك هنا (مثال: شقة في التجمع 3 غرف)..."):
@@ -373,7 +437,7 @@ def main():
                     cols = st.columns(3)
                     for i, doc in enumerate(related_docs):
                         with cols[i % 3]:
-                            render_property_card(doc)
+                            render_property_card(doc, key_suffix=f"current_{len(st.session_state.messages)}_{i}")
                     prop_data = related_docs
                     
                 # Save context

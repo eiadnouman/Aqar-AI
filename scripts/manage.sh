@@ -71,7 +71,10 @@ start_backend() {
 
   # shellcheck disable=SC1091
   source "${ROOT_DIR}/venv/bin/activate"
-  nohup env PYTHONPATH=backend uvicorn backend.app.main:app --host "${BACKEND_HOST}" --port "${BACKEND_PORT}" >"${BACKEND_LOG_FILE}" 2>&1 &
+  setsid env PYTHONPATH=backend "${ROOT_DIR}/venv/bin/python" -m uvicorn backend.app.main:app \
+    --host "${BACKEND_HOST}" \
+    --port "${BACKEND_PORT}" \
+    >"${BACKEND_LOG_FILE}" 2>&1 < /dev/null &
   echo $! >"${BACKEND_PID_FILE}"
   sleep 1
   echo "Backend started (PID: $(read_pid_file "$BACKEND_PID_FILE")) at http://${BACKEND_HOST}:${BACKEND_PORT}"
@@ -88,7 +91,11 @@ start_frontend() {
 
   # shellcheck disable=SC1091
   source "${ROOT_DIR}/venv/bin/activate"
-  nohup streamlit run src/app.py --server.address "${FRONTEND_HOST}" --server.port "${FRONTEND_PORT}" >"${FRONTEND_LOG_FILE}" 2>&1 &
+  setsid env STREAMLIT_BROWSER_GATHER_USAGE_STATS=false "${ROOT_DIR}/venv/bin/python" -m streamlit run src/app.py \
+    --server.address "${FRONTEND_HOST}" \
+    --server.port "${FRONTEND_PORT}" \
+    --server.headless true \
+    >"${FRONTEND_LOG_FILE}" 2>&1 < /dev/null &
   echo $! >"${FRONTEND_PID_FILE}"
   sleep 1
   echo "Frontend started (PID: $(read_pid_file "$FRONTEND_PID_FILE")) at http://${FRONTEND_HOST}:${FRONTEND_PORT}"

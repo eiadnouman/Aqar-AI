@@ -1,44 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.models.schemas import AnalyzeRequest, AnalyzeResponse, BuyDecision, Property, SegmentStat
+from app.api.v1.serializers import doc_to_property
+from app.models.schemas import AnalyzeRequest, AnalyzeResponse, BuyDecision, SegmentStat
 from app.services.rag_service import RAGService, get_rag_service
 import logging
 
 logger = logging.getLogger("aqarai")
 router = APIRouter()
-
-
-def _safe_float(value, default=0.0):
-    try:
-        return float(value)
-    except Exception:
-        return default
-
-
-def _safe_int(value, default=0):
-    try:
-        return int(float(value))
-    except Exception:
-        return default
-
-
-def _doc_to_property(doc):
-    meta = doc.metadata
-    return Property(
-        title=meta.get("title", "Property Listing"),
-        location=meta.get("location", "Unknown Location"),
-        price=_safe_float(meta.get("price", 0)),
-        bedrooms=_safe_int(meta.get("bedrooms", 0)),
-        bathrooms=_safe_int(meta.get("bathrooms", 0)),
-        size=_safe_float(meta.get("size", 0)),
-        image_url=meta.get("image", ""),
-        description=doc.page_content.split("Description: ")[-1][:200] + "...",
-        url=meta.get("url", "#"),
-        latitude=_safe_float(meta.get("lat") or meta.get("latitude") or 0) or None,
-        longitude=_safe_float(meta.get("lon") or meta.get("longitude") or 0) or None,
-        distance_km=_safe_float(meta.get("distance_km", 0)) or None,
-        nearby_services=list(meta.get("nearby_services", []) or []),
-        recommendation_score=_safe_float(meta.get("recommendation_score", 0)) or None,
-    )
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
@@ -52,7 +19,7 @@ async def analyze_endpoint(request: AnalyzeRequest, rag_engine: RAGService = Dep
         result = rag_engine.analyze_market(query=query, explicit_filters=explicit_filters)
         sample_docs = result.get("sample_docs", [])
 
-        sample_properties = [_doc_to_property(doc) for doc in sample_docs]
+        sample_properties = [doc_to_property(doc) for doc in sample_docs]
 
         top_locations = [SegmentStat(**item) for item in result.get("top_locations", [])]
         top_property_types = [SegmentStat(**item) for item in result.get("top_property_types", [])]
@@ -63,7 +30,7 @@ async def analyze_endpoint(request: AnalyzeRequest, rag_engine: RAGService = Dep
             "reasons": ["لا توجد بيانات كافية لإصدار قرار شراء."],
         }))
         better_option_doc = result.get("better_option_doc")
-        better_option = _doc_to_property(better_option_doc) if better_option_doc else None
+        better_option = doc_to_property(better_option_doc) if better_option_doc else None
 
         return AnalyzeResponse(
             insight=result.get("insight", ""),
