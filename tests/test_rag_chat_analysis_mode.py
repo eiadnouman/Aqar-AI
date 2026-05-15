@@ -155,6 +155,46 @@ def test_fast_property_response_returns_cards_without_llm():
     assert docs == [doc]
 
 
+def test_sanitize_filters_ignores_swagger_placeholder_values():
+    svc = RAGService.__new__(RAGService)
+    svc.vector_store = type("VectorStoreStub", (), {"available_locations": {"New Cairo"}})()
+
+    cleaned = svc._sanitize_filters(
+        {
+            "location": "string",
+            "property_type": "string",
+            "min_price": 0,
+            "max_price": 0,
+            "min_bedrooms": 0,
+            "max_bedrooms": 0,
+            "desired_services": ["string"],
+        }
+    )
+
+    assert cleaned["location"] is None
+    assert cleaned["property_type"] is None
+    assert cleaned["min_price"] is None
+    assert cleaned["max_price"] is None
+    assert cleaned["min_bedrooms"] is None
+    assert cleaned["max_bedrooms"] is None
+    assert cleaned["desired_services"] == []
+
+
+def test_enforce_padding_returns_more_than_five_strict_matches():
+    svc = RAGService.__new__(RAGService)
+    docs = [
+        Document(
+            page_content=f"Description: {idx}",
+            metadata={"title": f"Property {idx}", "location": "New Cairo", "url": f"https://example.com/{idx}"},
+        )
+        for idx in range(8)
+    ]
+
+    _status, results = svc._enforce_padding_logic("شقة في التجمع", {}, docs, docs, max_results=20)
+
+    assert len(results) == 8
+
+
 def test_compute_buy_decision_without_budget_uses_market_value_reason():
     svc = RAGService.__new__(RAGService)
     docs = [

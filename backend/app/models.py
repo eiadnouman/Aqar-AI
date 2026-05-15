@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional, Any
 
 class ChatRequest(BaseModel):
@@ -22,7 +22,15 @@ class ChatResponse(BaseModel):
     filters_used: Optional[dict] = None
 
 class SearchRequest(BaseModel):
-    query: str = Field(..., example="Apartments in New Cairo")
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "query": "عاوز شقة في التجمع الخامس 3 غرف تحت 5 مليون قريبة من المدارس"
+            }
+        }
+    )
+
+    query: str = Field(..., example="عاوز شقة في التجمع الخامس")
     
 class SearchResponse(BaseModel):
     properties: List[Property] = []

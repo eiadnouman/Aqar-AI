@@ -126,10 +126,16 @@ class RAGService:
         # 4. Vector Retrieval & Hard Constraints Application
         search_query = self._build_effective_search_query(query, filters)
         raw_docs = self.vector_store.retrieve(search_query, k=settings.chat_retrieval_k)
-        filtered_docs = self._apply_exact_filters(raw_docs, filters)
+        filtered_docs = self._expand_strict_matches(raw_docs, filters)
         
         # 5. Fallback Routing & Padding
-        search_status, final_docs = self._enforce_padding_logic(search_query, filters, filtered_docs, raw_docs)
+        search_status, final_docs = self._enforce_padding_logic(
+            search_query,
+            filters,
+            filtered_docs,
+            raw_docs,
+            max_results=settings.chat_result_limit,
+        )
         listing_intent = self._normalize_listing_intent(filters.get("listing_intent"))
         if listing_intent and not final_docs:
             response_text = self._build_listing_intent_unavailable_response(listing_intent, filters)
@@ -168,15 +174,22 @@ class RAGService:
         
         search_query = self._build_effective_search_query(query, filters)
         raw_docs = self.vector_store.retrieve(search_query, k=settings.search_retrieval_k)
-        filtered_docs = self._apply_exact_filters(raw_docs, filters)
+        filtered_docs = self._expand_strict_matches(raw_docs, filters)
         
-        _, final_docs = self._enforce_padding_logic(search_query, filters, filtered_docs, raw_docs)
+        _, final_docs = self._enforce_padding_logic(
+            search_query,
+            filters,
+            filtered_docs,
+            raw_docs,
+            max_results=settings.search_result_limit,
+        )
         final_docs = self._rank_recommendations(final_docs, filters)
         return filters, final_docs
 
-    def recommend_similar(self, description: str, k: int = 5) -> List[Document]:
+    def recommend_similar(self, description: str, k: Optional[int] = None) -> List[Document]:
         """Provides direct semantic equivalents to a given property description."""
-        return self.vector_store.similarity_search(description, k=k)
+        limit = self._result_limit(k, settings.recommendation_result_limit, 100)
+        return self.vector_store.similarity_search(description, k=limit)
 
     def record_property_interaction(
         self,
@@ -229,7 +242,7 @@ class RAGService:
         if not seed_ids:
             return []
 
-        limit = max(1, min(int(limit or 5), 20))
+        limit = self._result_limit(limit, settings.recommendation_result_limit, 100)
         cache_key = f"{normalized_session}:{','.join(map(str, seed_ids))}:{limit}"
         cached = self.recommendation_cache.get(cache_key)
         if cached and time.time() - cached[0] <= settings.interaction_cache_ttl_sec:
@@ -972,6 +985,50 @@ class RAGService:
 
         return filtered
 
+    def _expand_strict_matches(self, raw_docs: List[Document], filters: Dict[str, Any]) -> List[Document]:
+        """
+        Applies exact filters to semantic results, then expands from the full in-memory
+        index when filters are present. This keeps query retrieval semantic, while not
+        losing good exact matches just because they were outside the first vector hits.
+        """
+        filtered_docs = self._apply_exact_filters(raw_docs, filters)
+        if not self._has_active_filters(filters):
+            return filtered_docs
+
+        all_docs = getattr(self.vector_store, "all_docs_list", []) or []
+        if not all_docs:
+            return filtered_docs
+
+        strict_pool = self._apply_exact_filters(all_docs, filters)
+        try:
+            strict_pool = self.vector_store._enrich_docs(strict_pool)
+        except Exception:
+            pass
+
+        return self._merge_unique_docs(filtered_docs, strict_pool)
+
+    def _merge_unique_docs(self, *doc_groups: List[Document]) -> List[Document]:
+        merged: List[Document] = []
+        seen = set()
+        for docs in doc_groups:
+            for doc in docs or []:
+                key = self._doc_identity(doc)
+                if key in seen:
+                    continue
+                merged.append(doc)
+                seen.add(key)
+        return merged
+
+    def _doc_identity(self, doc: Document) -> str:
+        meta = doc.metadata if isinstance(doc.metadata, dict) else {}
+        return str(
+            meta.get("url")
+            or meta.get("property_id")
+            or meta.get("id")
+            or meta.get("title")
+            or id(doc)
+        )
+
     def _sanitize_filters(self, filters: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(filters, dict):
             return {}
@@ -979,10 +1036,21 @@ class RAGService:
         cleaned = dict(filters)
         cleaned["location"] = self._normalize_location_filter(cleaned.get("location"))
         cleaned["listing_intent"] = self._normalize_listing_intent(cleaned.get("listing_intent"))
+        cleaned["property_type"] = self._normalize_optional_text_filter(cleaned.get("property_type"))
+        for key in ("min_price", "max_price"):
+            cleaned[key] = self._normalize_positive_number_filter(cleaned.get(key))
+        for key in ("min_bedrooms", "max_bedrooms"):
+            value = self._normalize_positive_number_filter(cleaned.get(key))
+            cleaned[key] = int(value) if value is not None else None
         services = cleaned.get("desired_services")
         if isinstance(services, str):
             services = [s.strip() for s in services.split(",") if s.strip()]
         if isinstance(services, list):
+            services = [
+                item
+                for item in services
+                if self._normalize_optional_text_filter(item) is not None
+            ]
             cleaned["desired_services"] = self._normalize_services(services)
         elif services is not None:
             cleaned["desired_services"] = []
@@ -996,6 +1064,8 @@ class RAGService:
         if not raw:
             return None
         raw_lower = raw.lower()
+        if raw_lower in {"string", "none", "null", "undefined", "optional"}:
+            return None
 
         aliases = {
             "القاهرة": "Cairo",
@@ -1036,6 +1106,29 @@ class RAGService:
                 return candidate_text
 
         return raw
+
+    @staticmethod
+    def _normalize_optional_text_filter(value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        raw = str(value).strip()
+        if not raw:
+            return None
+        if raw.lower() in {"string", "none", "null", "undefined", "optional"}:
+            return None
+        return raw
+
+    @staticmethod
+    def _normalize_positive_number_filter(value: Any) -> Optional[float]:
+        if value in (None, "", [], {}):
+            return None
+        try:
+            parsed = float(value)
+        except Exception:
+            return None
+        if parsed <= 0:
+            return None
+        return parsed
 
     def _normalize_listing_intent(self, listing_intent: Any) -> Optional[str]:
         if listing_intent is None:
@@ -1616,11 +1709,12 @@ class RAGService:
         for key, _ in sorted_items[: len(self.recommendation_cache) - max_entries]:
             self.recommendation_cache.pop(key, None)
 
-    def _enforce_padding_logic(self, query, filters, filtered_docs, raw_docs):
+    def _enforce_padding_logic(self, query, filters, filtered_docs, raw_docs, max_results: Optional[int] = None):
         """
-        Calculates search status and conditionally pads results.
+        Calculates search status and returns the best matching result set.
         Enforces strict geographical boundaries when backing off constraints.
         """
+        result_limit = self._result_limit(max_results, settings.chat_result_limit, settings.search_retrieval_k)
         search_status = "Excellent Match: We found properties that match exactly your request."
         requested_intent = self._normalize_listing_intent(filters.get("listing_intent"))
         
@@ -1652,38 +1746,22 @@ class RAGService:
                 filtered_docs = [
                     d for d in raw_docs
                     if (not requested_intent) or self._doc_listing_intent(d) == requested_intent
-                ][:5]
+                ][:result_limit]
             else:
-                filtered_docs = filtered_docs[:5]
+                filtered_docs = filtered_docs[:result_limit]
                 
-        elif len(filtered_docs) < 5:
-             search_status = "Partial Match: We found a few matching properties. Display these along with semantic alternatives in the same region."
-             existing_urls = {d.metadata.get('url') for d in filtered_docs}
-             
-             requested_loc = filters.get('location')
-             
-             padding_pool = []
-             # Pad exclusively inside the requested geo-fence
-             if requested_loc:
-                 for d in raw_docs:
-                     d_loc = d.metadata.get('location', '').lower()
-                     if requested_loc.lower() in d_loc:
-                         padding_pool.append(d)
-             else:
-                 # If no specific location was requested, pad from anywhere
-                 padding_pool = raw_docs
-                 if requested_intent:
-                     padding_pool = [d for d in padding_pool if self._doc_listing_intent(d) == requested_intent]
-             
-             for doc in padding_pool:
-                 if len(filtered_docs) >= 5: break
-                 if doc.metadata.get('url') not in existing_urls:
-                     filtered_docs.append(doc)
-                     existing_urls.add(doc.metadata.get('url'))
         else:
-            filtered_docs = filtered_docs[:5]
+            filtered_docs = filtered_docs[:result_limit]
             
         return search_status, filtered_docs
+
+    @staticmethod
+    def _result_limit(value: Any, default: int, hard_max: int) -> int:
+        try:
+            parsed = int(value or default)
+        except Exception:
+            parsed = default
+        return max(1, min(parsed, hard_max))
 
     def _generate_fast_property_response(self, query, search_status, final_docs, history=None):
         """Builds a low-latency Arabic response from ranked docs without a second LLM call."""
@@ -1704,8 +1782,13 @@ class RAGService:
         else:
             opening = "مفيش تطابق كامل بنفس الشروط، فدي أقرب بدائل متاحة حاليًا:"
 
+        summary_count = self._result_limit(
+            settings.fast_response_summary_items,
+            5,
+            max(1, len(final_docs)),
+        )
         lines = [opening]
-        for idx, doc in enumerate(final_docs[:3], start=1):
+        for idx, doc in enumerate(final_docs[:summary_count], start=1):
             meta = doc.metadata if isinstance(doc.metadata, dict) else {}
             title = str(meta.get("title") or "عقار مناسب").strip()
             location = str(meta.get("location") or "منطقة غير محددة").strip()
@@ -1728,6 +1811,9 @@ class RAGService:
             lines.append(f"أقوى ترشيح عندي: {best_title}، لأنه مرتب عاليًا ومعاه خدمات قريبة زي {', '.join(services[:3])}.")
         else:
             lines.append(f"أقوى ترشيح عندي: {best_title}، لأنه الأقرب لشروطك بين النتائج المتاحة.")
+
+        if len(final_docs) > summary_count:
+            lines.append(f"ورجعت لك {len(final_docs)} نتيجة مطابقة في الكروت، مرتبين حسب الأقرب والأفضل.")
 
         content = "\n".join(lines).strip()
         history.append(HumanMessage(content=query))

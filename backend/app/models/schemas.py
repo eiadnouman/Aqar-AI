@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional, Dict, Any
 
 class Property(BaseModel):
@@ -31,8 +31,16 @@ class ChatResponse(BaseModel):
     
 class SearchRequest(BaseModel):
     """Payload for headless search queries."""
-    query: Optional[str] = Field(None, description="Search query or filters in natural language")
-    location: Optional[str] = Field(None, description="Target location")
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "query": "عاوز شقة في التجمع الخامس 3 غرف تحت 5 مليون قريبة من المدارس"
+            }
+        }
+    )
+
+    query: Optional[str] = Field(None, description="Primary natural-language search request. Put location, budget, rooms, and services here.")
+    location: Optional[str] = Field(None, description="Optional override. Leave empty unless the UI has a dedicated location picker.")
     min_price: Optional[float] = Field(None, description="Minimum price boundary")
     max_price: Optional[float] = Field(None, description="Maximum price boundary")
     min_bedrooms: Optional[int] = Field(None, description="Minimum bedrooms")
@@ -50,6 +58,7 @@ class RecommendRequest(BaseModel):
     property_description: str = Field(..., description="Text description of the target property")
     session_id: Optional[str] = Field(None, description="Optional session ID for interaction-aware ranking")
     property_ids: Optional[List[int]] = Field(None, description="Optional clicked/favorited property IDs")
+    limit: Optional[int] = Field(None, ge=1, le=100, description="Optional maximum recommendations to return")
 
 class RecommendResponse(BaseModel):
     """Response containing similar properties."""
@@ -74,7 +83,7 @@ class SessionRecommendRequest(BaseModel):
     """Payload for recommendations from session interaction history."""
     session_id: str = Field(..., description="Session ID with stored property interactions")
     property_ids: Optional[List[int]] = Field(None, description="Optional additional property IDs")
-    limit: int = Field(5, ge=1, le=20, description="Maximum properties to return")
+    limit: int = Field(30, ge=1, le=100, description="Maximum properties to return")
 
 
 class AnalyzeRequest(BaseModel):

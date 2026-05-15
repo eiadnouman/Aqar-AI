@@ -39,8 +39,12 @@ class Settings(BaseSettings):
     # Runtime performance knobs
     fast_filter_extraction: bool = True
     fast_property_responses: bool = True
-    chat_retrieval_k: int = 60
-    search_retrieval_k: int = 80
+    chat_retrieval_k: int = 120
+    search_retrieval_k: int = 200
+    chat_result_limit: int = 50
+    search_result_limit: int = 100
+    recommendation_result_limit: int = 30
+    fast_response_summary_items: int = 5
     llm_max_tokens: int = 700
     
     # Application Context

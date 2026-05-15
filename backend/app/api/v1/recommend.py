@@ -17,10 +17,10 @@ async def recommend_similar_endpoint(request: RecommendRequest, rag_engine: RAGS
             docs = rag_engine.recommend_from_interactions(
                 session_id=request.session_id or "_anonymous",
                 property_ids=request.property_ids,
-                limit=5,
+                limit=request.limit,
             )
         else:
-            docs = rag_engine.recommend_similar(request.property_description)
+            docs = rag_engine.recommend_similar(request.property_description, k=request.limit)
         
         properties = [doc_to_property(doc) for doc in docs]
             
