@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     property_public_base_url: Optional[str] = None
     interaction_cache_ttl_sec: int = 3600
     cors_allowed_origins: str = "*"
+
+    # Runtime performance knobs
+    fast_filter_extraction: bool = True
+    fast_property_responses: bool = True
+    chat_retrieval_k: int = 60
+    search_retrieval_k: int = 80
+    llm_max_tokens: int = 700
     
     # Application Context
     project_name: str = "Aqar-AI Intelligence API"

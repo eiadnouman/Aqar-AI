@@ -34,6 +34,21 @@ def test_filter_engine_extracts_listing_intent_from_regex_fallback():
     assert buy_filters.get("listing_intent") == "buy"
 
 
+def test_filter_engine_extracts_property_type_from_fast_regex_path():
+    engine = FilterEngine(_DummyLLMManager())
+
+    filters = engine.extract_filters("عاوز شقة في التجمع الخامس", {"The 5th Settlement"})
+
+    assert filters.get("property_type") == "apartment"
+    assert filters.get("location") == "The 5th Settlement"
+
+
+def test_fast_regex_defers_when_query_has_unmapped_location_cue():
+    engine = FilterEngine(_DummyLLMManager())
+
+    assert engine._should_use_fast_regex("عاوز شقة في مدينتي", {"property_type": "apartment"}) is False
+
+
 def test_filter_engine_backfills_missing_llm_fields_from_regex(monkeypatch):
     class _LLMManager:
         def get_llm(self):

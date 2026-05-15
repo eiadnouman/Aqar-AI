@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional, Set
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from app.core.logging import logger
+from app.core.config import settings
 
 
 class SearchFilters(BaseModel):
@@ -38,6 +39,8 @@ class FilterEngine:
     ) -> Dict[str, Any]:
         """Extracts filters using LLM, then backfills missing fields with regex heuristics."""
         regex_filters = self._extract_filters_regex(query)
+        if settings.fast_filter_extraction and self._should_use_fast_regex(query, regex_filters):
+            return regex_filters
 
         # We always attempt LLM Tool Calling extraction first for precision.
         try:
@@ -131,6 +134,18 @@ class FilterEngine:
         elif any(token in q_lower for token in buy_tokens):
             filters["listing_intent"] = "buy"
 
+        property_type_map = {
+            "apartment": ["شقة", "شقق", "apartment", "apartments", "flat", "flats"],
+            "villa": ["فيلا", "فيلات", "villa", "villas"],
+            "duplex": ["دوبلكس", "duplex"],
+            "studio": ["ستوديو", "studio"],
+            "chalet": ["شاليه", "شاليهات", "chalet", "chalets"],
+        }
+        for canonical, keywords in property_type_map.items():
+            if any(token in q_lower for token in keywords):
+                filters["property_type"] = canonical
+                break
+
         # Basic Location Mapping for Regex Fallback
         location_map = {
             "القاهرة": "Cairo", "قاهرة": "Cairo",
@@ -161,3 +176,32 @@ class FilterEngine:
             filters["desired_services"] = matched_services
                 
         return filters
+
+    @staticmethod
+    def _has_actionable_regex_filters(filters: Dict[str, Any]) -> bool:
+        return any(
+            filters.get(key) not in (None, "", [], {})
+            for key in (
+                "location",
+                "min_price",
+                "max_price",
+                "min_bedrooms",
+                "max_bedrooms",
+                "property_type",
+                "listing_intent",
+                "desired_services",
+            )
+        )
+
+    def _should_use_fast_regex(self, query: str, filters: Dict[str, Any]) -> bool:
+        if not self._has_actionable_regex_filters(filters):
+            return False
+        if filters.get("location"):
+            return True
+
+        q_lower = str(query or "").lower()
+        location_cues = (" في ", " فى ", " بمنطقة", " داخل ", " in ")
+        if any(cue in f" {q_lower} " for cue in location_cues):
+            return False
+
+        return True

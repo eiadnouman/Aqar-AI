@@ -233,8 +233,7 @@ class VectorStoreManager:
             return []
 
         # 1. Semantic FAISS retrieval
-        faiss_retriever = self.vectorstore.as_retriever(search_kwargs={"k": k * 2}) # Pull more for safe intersection
-        faiss_docs = faiss_retriever.invoke(f"query: {query}")
+        faiss_docs = self.vectorstore.similarity_search(f"query: {query}", k=k * 2)
         
         # 2. Keyword BM25 retrieval
         tokenized_query = query.lower().split()

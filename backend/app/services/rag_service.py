@@ -1,8 +1,8 @@
-from functools import lru_cache
 import math
 import re
 import time
 from statistics import mean, median
+from threading import Lock
 from typing import Any, Dict, List, Optional, Tuple
 from langchain_core.documents import Document
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
@@ -124,11 +124,12 @@ class RAGService:
         logger.info(f"Active Merged Filters applied: {filters}")
 
         # 4. Vector Retrieval & Hard Constraints Application
-        raw_docs = self.vector_store.retrieve(query)
+        search_query = self._build_effective_search_query(query, filters)
+        raw_docs = self.vector_store.retrieve(search_query, k=settings.chat_retrieval_k)
         filtered_docs = self._apply_exact_filters(raw_docs, filters)
         
         # 5. Fallback Routing & Padding
-        search_status, final_docs = self._enforce_padding_logic(query, filters, filtered_docs, raw_docs)
+        search_status, final_docs = self._enforce_padding_logic(search_query, filters, filtered_docs, raw_docs)
         listing_intent = self._normalize_listing_intent(filters.get("listing_intent"))
         if listing_intent and not final_docs:
             response_text = self._build_listing_intent_unavailable_response(listing_intent, filters)
@@ -139,6 +140,9 @@ class RAGService:
         final_docs = self._rank_recommendations(final_docs, filters)
 
         # 6. Language Model Generation
+        if settings.fast_property_responses:
+            return self._generate_fast_property_response(query, search_status, final_docs, history)
+
         response_text, generated_docs = self._generate_response(query, search_status, final_docs, history)
         
         return response_text, generated_docs
@@ -162,8 +166,8 @@ class RAGService:
                 if k not in filters or filters[k] is None:
                     filters[k] = v
         
-        search_query = query or str(filters)
-        raw_docs = self.vector_store.retrieve(search_query)
+        search_query = self._build_effective_search_query(query, filters)
+        raw_docs = self.vector_store.retrieve(search_query, k=settings.search_retrieval_k)
         filtered_docs = self._apply_exact_filters(raw_docs, filters)
         
         _, final_docs = self._enforce_padding_logic(search_query, filters, filtered_docs, raw_docs)
@@ -256,6 +260,47 @@ class RAGService:
         self._trim_recommendation_cache()
         return recommendations
 
+    def _build_effective_search_query(
+        self,
+        query: Optional[str],
+        filters: Optional[Dict[str, Any]],
+        fallback: str = "real estate in Egypt",
+    ) -> str:
+        """
+        Keeps natural language as the source of truth for retrieval.
+        Explicit fields are folded back into the query text instead of replacing
+        it with a dict-like string, so address/location/title signals stay inside
+        one semantic search query.
+        """
+        parts: List[str] = []
+        base_query = str(query or "").strip()
+        if base_query:
+            parts.append(base_query)
+
+        safe_filters = filters if isinstance(filters, dict) else {}
+        field_labels = {
+            "location": "Location",
+            "address": "Address",
+            "title": "Title",
+            "property_type": "Type",
+            "listing_intent": "Listing intent",
+            "min_price": "Minimum price",
+            "max_price": "Maximum price",
+            "min_bedrooms": "Minimum bedrooms",
+            "max_bedrooms": "Maximum bedrooms",
+        }
+        for key, label in field_labels.items():
+            value = safe_filters.get(key)
+            if value in (None, "", [], {}):
+                continue
+            parts.append(f"{label}: {value}")
+
+        desired_services = self._normalize_services(safe_filters.get("desired_services", []))
+        if desired_services:
+            parts.append(f"Nearby services: {', '.join(desired_services)}")
+
+        return "\n".join(parts).strip() or fallback
+
     def analyze_market(self, query: Optional[str] = None, explicit_filters: Dict = None) -> Dict[str, Any]:
         """
         Generates numerical market insights from matched inventory rather than conversational output.
@@ -296,7 +341,7 @@ class RAGService:
                     if k not in filters or filters[k] is None:
                         filters[k] = v
 
-        search_query = query or str(filters) or "real estate market in Egypt"
+        search_query = self._build_effective_search_query(query, filters, fallback="real estate market in Egypt")
         raw_docs = self.vector_store.retrieve(search_query, k=250)
         strict_docs = self._apply_exact_filters(raw_docs, filters)
 
@@ -1044,7 +1089,7 @@ class RAGService:
                 doc.metadata["distance_km"] = round(distance_km, 2)
 
             services = self._normalize_services(doc.metadata.get("nearby_services", []))
-            if idx < max_live_service_docs and lat is not None and lon is not None:
+            if desired_services and idx < max_live_service_docs and lat is not None and lon is not None:
                 api_services = self._get_live_services(lat, lon)
                 if api_services:
                     services = self._normalize_services(services + api_services)
@@ -1099,9 +1144,6 @@ class RAGService:
         self, docs: List[Document], filters: Dict
     ) -> Optional[Tuple[float, float]]:
         requested_location = str(filters.get("location", "") or "").lower().strip()
-        requested_center = self._get_requested_location_center(requested_location)
-        if requested_center is not None:
-            return requested_center
 
         prioritized: List[Tuple[float, float]] = []
         fallback: List[Tuple[float, float]] = []
@@ -1115,12 +1157,12 @@ class RAGService:
                 prioritized.append((lat, lon))
 
         pool = prioritized if prioritized else fallback
-        if not pool:
-            return None
+        if pool:
+            lat_center = sum(p[0] for p in pool) / len(pool)
+            lon_center = sum(p[1] for p in pool) / len(pool)
+            return lat_center, lon_center
 
-        lat_center = sum(p[0] for p in pool) / len(pool)
-        lon_center = sum(p[1] for p in pool) / len(pool)
-        return lat_center, lon_center
+        return self._get_requested_location_center(requested_location)
 
     def _get_requested_location_center(
         self, requested_location: str
@@ -1643,6 +1685,65 @@ class RAGService:
             
         return search_status, filtered_docs
 
+    def _generate_fast_property_response(self, query, search_status, final_docs, history=None):
+        """Builds a low-latency Arabic response from ranked docs without a second LLM call."""
+        if history is None:
+            history = []
+
+        if not final_docs:
+            content = "مش لاقي نتائج مناسبة للطلب ده في قاعدة البيانات الحالية. جرّب توسّع المنطقة أو الميزانية شوية."
+            history.append(HumanMessage(content=query))
+            history.append(AIMessage(content=content))
+            return content, []
+
+        status_text = str(search_status or "")
+        if status_text.startswith("Excellent Match"):
+            opening = "تمام، لقيت لك أفضل النتائج المطابقة لطلبك:"
+        elif status_text.startswith("Partial Match"):
+            opening = "لقيت شوية نتائج قريبة جدًا من طلبك، وكملت لك بأفضل بدائل في نفس النطاق:"
+        else:
+            opening = "مفيش تطابق كامل بنفس الشروط، فدي أقرب بدائل متاحة حاليًا:"
+
+        lines = [opening]
+        for idx, doc in enumerate(final_docs[:3], start=1):
+            meta = doc.metadata if isinstance(doc.metadata, dict) else {}
+            title = str(meta.get("title") or "عقار مناسب").strip()
+            location = str(meta.get("location") or "منطقة غير محددة").strip()
+            price = self._format_price_text(meta.get("price"))
+            bedrooms = self._safe_int_value(meta.get("bedrooms"))
+            size = self._safe_int_value(meta.get("size"))
+            specs = []
+            if bedrooms:
+                specs.append(f"{bedrooms} غرف")
+            if size:
+                specs.append(f"{size} م²")
+            spec_text = f" ({'، '.join(specs)})" if specs else ""
+            lines.append(f"{idx}. {title} في {location} بسعر {price}{spec_text}.")
+
+        best_doc = final_docs[0]
+        best_meta = best_doc.metadata if isinstance(best_doc.metadata, dict) else {}
+        best_title = str(best_meta.get("title") or "أول اختيار").strip()
+        services = self._normalize_services(best_meta.get("nearby_services", []))
+        if services:
+            lines.append(f"أقوى ترشيح عندي: {best_title}، لأنه مرتب عاليًا ومعاه خدمات قريبة زي {', '.join(services[:3])}.")
+        else:
+            lines.append(f"أقوى ترشيح عندي: {best_title}، لأنه الأقرب لشروطك بين النتائج المتاحة.")
+
+        content = "\n".join(lines).strip()
+        history.append(HumanMessage(content=query))
+        history.append(AIMessage(content=content))
+        return content, final_docs
+
+    def _format_price_text(self, value: Any) -> str:
+        price = self._safe_float(value)
+        if price <= 0:
+            return "سعر غير محدد"
+        if price >= 1_000_000:
+            amount = price / 1_000_000
+            text = f"{amount:.1f}".rstrip("0").rstrip(".")
+            return f"{text} مليون جنيه"
+        return f"{price:,.0f} جنيه"
+
     def _generate_response(self, query, search_status, final_docs, history=None):
         """Generates conversational text with deep Chat History Memory."""
         if history is None:
@@ -1769,7 +1870,22 @@ class RAGService:
             return "آسف، مش فاهم السؤال ده. ممكن توضح أكتر؟", []
 
 
-@lru_cache(maxsize=1)
 def get_rag_service() -> RAGService:
     """Returns a singleton-like shared RAG service instance for all requests."""
-    return RAGService()
+    global _RAG_SERVICE
+    if _RAG_SERVICE is None:
+        with _RAG_SERVICE_LOCK:
+            if _RAG_SERVICE is None:
+                _RAG_SERVICE = RAGService()
+    return _RAG_SERVICE
+
+
+def _clear_rag_service_cache():
+    global _RAG_SERVICE
+    with _RAG_SERVICE_LOCK:
+        _RAG_SERVICE = None
+
+
+_RAG_SERVICE: Optional[RAGService] = None
+_RAG_SERVICE_LOCK = Lock()
+get_rag_service.cache_clear = _clear_rag_service_cache

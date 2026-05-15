@@ -114,6 +114,47 @@ def test_filter_docs_by_location_keeps_requested_area_on_fallback():
     assert filtered[0].metadata["title"] == "cairo-option"
 
 
+def test_effective_search_query_folds_structured_fields_into_query_text():
+    svc = RAGService.__new__(RAGService)
+
+    query = svc._build_effective_search_query(
+        "عاوز شقة",
+        {
+            "location": "The 5th Settlement",
+            "property_type": "apartment",
+            "max_price": 4_000_000,
+            "desired_services": ["schools", "transport"],
+        },
+    )
+
+    assert "عاوز شقة" in query
+    assert "Location: The 5th Settlement" in query
+    assert "Type: apartment" in query
+    assert "Maximum price: 4000000" in query
+    assert "Nearby services: schools, transport" in query
+
+
+def test_fast_property_response_returns_cards_without_llm():
+    svc = RAGService.__new__(RAGService)
+    doc = Document(
+        page_content="Description",
+        metadata={
+            "title": "Garden Apartment",
+            "location": "New Cairo",
+            "price": 3_500_000,
+            "bedrooms": 3,
+            "size": 160,
+            "nearby_services": ["schools", "transport"],
+        },
+    )
+
+    text, docs = svc._generate_fast_property_response("عاوز شقة في التجمع", "Excellent Match", [doc], [])
+
+    assert "Garden Apartment" in text
+    assert "3.5 مليون جنيه" in text
+    assert docs == [doc]
+
+
 def test_compute_buy_decision_without_budget_uses_market_value_reason():
     svc = RAGService.__new__(RAGService)
     docs = [
