@@ -154,7 +154,8 @@ class RAGService:
         final_docs = self._rank_recommendations(final_docs, filters)
 
         # 6. Language Model Generation
-        if settings.fast_property_responses:
+        is_arabic = bool(re.search(r"[\u0600-\u06FF]", query))
+        if settings.fast_property_responses and not is_arabic:
             return self._generate_fast_property_response(query, search_status, final_docs, history)
 
         response_text, generated_docs = self._generate_response(query, search_status, final_docs, history)
