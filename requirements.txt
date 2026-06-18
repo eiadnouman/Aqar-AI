@@ -1,18 +1,13 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-
 faiss-cpu
 fastapi
 groq
 langchain
 langchain-community
 langchain-groq
-langchain-huggingface
 numpy
 pydantic
 pydantic-settings
 requests
 python-dotenv
 rank-bm25
-sentence-transformers
-streamlit
 uvicorn

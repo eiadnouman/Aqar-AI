@@ -67,16 +67,19 @@ def test_unified_schema_hard_arabic_query():
 
 def test_bilingual_response():
     """Verify that English queries receive responses in English and Arabic queries in Arabic."""
-    # Arabic query -> Arabic response
-    response_ar = client.post("/api/v1/chat", json={"message": "مرحبا، مين انت؟"})
+    # Arabic greeting -> deterministic Arabic response
+    response_ar = client.post("/api/v1/chat", json={"message": "ازيك"})
     assert response_ar.status_code == 200
     data_ar = response_ar.json()
-    assert any(word in data_ar["answer"] for word in ["أنا", "عقار", "مساعد", "مرحباً", "اهلا"])
+    # Should contain Arabic text from _build_greeting_response
+    assert "AqarAI" in data_ar["answer"]
+    assert any(c >= '\u0600' and c <= '\u06FF' for c in data_ar["answer"]), "Arabic greeting should respond in Arabic"
 
-    # English query -> English response
-    response_en = client.post("/api/v1/chat", json={"message": "Hello, who are you?"})
+    # English greeting -> deterministic English response
+    response_en = client.post("/api/v1/chat", json={"message": "hello"})
     assert response_en.status_code == 200
     data_en = response_en.json()
-    # Check that it responded in English
-    assert any(word.lower() in data_en["answer"].lower() for word in ["i am", "aqarai", "hello", "real estate", "consultant", "smart"])
+    # Should contain English text from _build_greeting_response
+    assert "AqarAI" in data_en["answer"]
+    assert "Hello" in data_en["answer"] or "hello" in data_en["answer"].lower()
 

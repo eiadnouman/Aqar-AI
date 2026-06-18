@@ -1,15 +1,86 @@
 import os
 import csv
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 import requests
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from rank_bm25 import BM25Okapi
 import numpy as np
 from app.core.config import settings
 from app.core.logging import logger
+
+
+class HFInferenceEmbeddings(Embeddings):
+    """
+    Lightweight embeddings using the HuggingFace Serverless Inference API.
+    Eliminates the need to load PyTorch + SentenceTransformers locally,
+    reducing RAM from ~700MB to ~50MB — critical for Railway/Render deployments.
+    Uses the same model (intfloat/multilingual-e5-small) hosted on HF servers.
+    """
+
+    def __init__(self, model_name: str = "intfloat/multilingual-e5-small", api_token: Optional[str] = None):
+        self.model_name = model_name
+        self.api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_name}"
+        self.headers = {"Content-Type": "application/json"}
+        if api_token:
+            self.headers["Authorization"] = f"Bearer {api_token}"
+        self._max_batch = 64
+        self._timeout = 60
+
+    def _call_api(self, texts: List[str]) -> List[List[float]]:
+        """Sends texts to HF Inference API and returns sentence embeddings."""
+        payload = {"inputs": texts, "options": {"wait_for_model": True}}
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                resp = requests.post(
+                    self.api_url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=self._timeout,
+                )
+                if resp.status_code == 503:
+                    # Model is loading, wait and retry
+                    wait_time = min(20, 5 * (attempt + 1))
+                    logger.info(f"HF model loading, retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})...")
+                    time.sleep(wait_time)
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+
+                result = []
+                for emb in data:
+                    if isinstance(emb, list) and len(emb) > 0 and isinstance(emb[0], list):
+                        # Token-level embeddings returned; mean-pool to sentence level
+                        arr = np.array(emb, dtype=np.float32)
+                        pooled = arr.mean(axis=0).tolist()
+                        result.append(pooled)
+                    else:
+                        result.append(emb)
+                return result
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    time.sleep(3)
+                    continue
+                raise RuntimeError(f"HF Inference API failed after {max_retries} attempts: {e}") from e
+        raise RuntimeError("HF Inference API exhausted retries")
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """Embeds a list of documents, batching if necessary."""
+        if not texts:
+            return []
+        all_embeddings: List[List[float]] = []
+        for i in range(0, len(texts), self._max_batch):
+            batch = texts[i : i + self._max_batch]
+            all_embeddings.extend(self._call_api(batch))
+        return all_embeddings
+
+    def embed_query(self, text: str) -> List[float]:
+        """Embeds a single query string."""
+        return self._call_api([text])[0]
 
 
 class VectorStoreManager:
@@ -31,31 +102,46 @@ class VectorStoreManager:
         
         self._load_index()
 
-    def _initialize_embeddings(self) -> Optional[HuggingFaceEmbeddings]:
+    def _initialize_embeddings(self):
         """
-        Initializes embeddings with a project-local HuggingFace cache path.
-        This avoids failures when the global cache path is not a directory or
-        is not writable in some runtimes.
+        Initializes embeddings. Tries the lightweight HF Inference API first
+        (zero RAM overhead, ideal for Railway/cloud). Falls back to local
+        PyTorch-based SentenceTransformers if the API is unreachable (local dev).
         """
+        # --- Strategy 1: HF Inference API (cloud-friendly, ~0 RAM) ---
         try:
+            api_token = (getattr(settings, "huggingfacehub_api_token", None) or "").strip() or None
+            embeddings = HFInferenceEmbeddings(
+                model_name="intfloat/multilingual-e5-small",
+                api_token=api_token,
+            )
+            embeddings.embed_query("test")
+            logger.info("HF Inference API embeddings initialized successfully (cloud mode).")
+            return embeddings
+        except Exception as e:
+            logger.warning(f"HF Inference API unavailable ({e}); falling back to local model.")
+
+        # --- Strategy 2: Local PyTorch SentenceTransformers (dev fallback) ---
+        try:
+            from langchain_huggingface import HuggingFaceEmbeddings
+
             project_root = os.path.dirname(
                 os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             )
             hf_cache_dir = os.path.join(project_root, ".cache", "huggingface")
-            transformers_cache_dir = os.path.join(hf_cache_dir, "transformers")
-
-            os.makedirs(transformers_cache_dir, exist_ok=True)
+            os.makedirs(hf_cache_dir, exist_ok=True)
             os.environ["HF_HOME"] = hf_cache_dir
             os.environ["SENTENCE_TRANSFORMERS_HOME"] = hf_cache_dir
-            os.environ["TRANSFORMERS_CACHE"] = transformers_cache_dir
 
-            return HuggingFaceEmbeddings(
+            embeddings = HuggingFaceEmbeddings(
                 model_name="intfloat/multilingual-e5-small",
                 cache_folder=hf_cache_dir,
                 model_kwargs={"device": "cpu"},
             )
+            logger.info("Local SentenceTransformer embeddings initialized (dev mode).")
+            return embeddings
         except Exception as e:
-            logger.error(f"Failed to initialize embeddings model: {e}")
+            logger.error(f"Failed to initialize any embeddings backend: {e}")
             return None
 
     def _load_index(self):

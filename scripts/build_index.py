@@ -2,11 +2,15 @@ import csv
 import json
 import os
 import shutil
+import sys
 import requests
 from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
+
+# Add backend to path so we can import our custom embeddings
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "backend"))
+from app.services.vector_store import HFInferenceEmbeddings
 
 
 def safe_float(value):
@@ -149,19 +153,27 @@ def docs_from_external_api():
 def build_index():
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     load_dotenv(os.path.join(project_root, ".env"))
-    hf_cache_dir = os.path.join(project_root, ".cache", "huggingface")
-    transformers_cache_dir = os.path.join(hf_cache_dir, "transformers")
-    os.makedirs(transformers_cache_dir, exist_ok=True)
-    os.environ["HF_HOME"] = hf_cache_dir
-    os.environ["SENTENCE_TRANSFORMERS_HOME"] = hf_cache_dir
-    os.environ["TRANSFORMERS_CACHE"] = transformers_cache_dir
 
-    print("Loading embeddings...")
-    embeddings = HuggingFaceEmbeddings(
-        model_name="intfloat/multilingual-e5-small",
-        cache_folder=hf_cache_dir,
-        model_kwargs={"device": "cpu"},
-    )
+    print("Initializing embeddings...")
+    api_token = (os.getenv("HUGGINGFACEHUB_API_TOKEN") or "").strip() or None
+    try:
+        embeddings = HFInferenceEmbeddings(
+            model_name="intfloat/multilingual-e5-small",
+            api_token=api_token,
+        )
+        embeddings.embed_query("test")
+        print("Using HF Inference API embeddings (cloud mode).")
+    except Exception as e:
+        print(f"HF Inference API unavailable ({e}); falling back to local model.")
+        from langchain_huggingface import HuggingFaceEmbeddings
+        hf_cache_dir = os.path.join(project_root, ".cache", "huggingface")
+        os.makedirs(hf_cache_dir, exist_ok=True)
+        embeddings = HuggingFaceEmbeddings(
+            model_name="intfloat/multilingual-e5-small",
+            cache_folder=hf_cache_dir,
+            model_kwargs={"device": "cpu"},
+        )
+        print("Using local SentenceTransformer embeddings (dev mode).")
 
     csv_path = os.path.join(project_root, "data", "properties.csv")
     index_path = os.path.join(project_root, "data", "faiss_index_cloud")
