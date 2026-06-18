@@ -110,8 +110,16 @@ class RAGService:
                 self.chat_history[session_id].append(AIMessage(content=response_text))
             return response_text, analysis_docs
 
-        # Check if it's a property-related query
-        is_property_query = any(v is not None for v in new_filters.values()) or self._is_property_keyword_query(query)
+        # Check if it's a property-related query (anti-hallucination guard)
+        has_meaningful_filters = any(
+            v is not None and v != "" and v != [] and v != {}
+            for v in new_filters.values()
+        )
+        is_property_query = has_meaningful_filters or self._is_property_keyword_query(query)
+        
+        # Extra guard: if query matches casual/chitchat patterns, never show properties
+        if self._is_casual_chitchat(query):
+            is_property_query = False
         
         if not is_property_query:
             # Conversational response for non-property queries
@@ -560,7 +568,8 @@ class RAGService:
         if not raw_query:
             return False
 
-        tokens = [
+        # Must contain at least one property-specific keyword
+        property_tokens = [
             "apartment",
             "apartments",
             "villa",
@@ -583,8 +592,64 @@ class RAGService:
             "للبيع",
             "شراء",
             "بيع",
+            "غرف",
+            "غرفة",
+            "متر",
+            "كمبوند",
+            "compound",
         ]
-        return any(token in raw_query for token in tokens)
+        return any(token in raw_query for token in property_tokens)
+
+    @staticmethod
+    def _is_casual_chitchat(query: str) -> bool:
+        """Detects casual/social queries that should NEVER trigger property results."""
+        normalized = re.sub(r"[\s،,.!؟?]+", " ", str(query or "").strip().lower()).strip()
+        if not normalized:
+            return False
+
+        # Exact match phrases that are definitively NOT about properties
+        chitchat_exact = {
+            "ازيك", "إزيك", "ازيكم", "عامل ايه", "عامل إيه",
+            "الحمد لله", "تمام", "شكرا", "شكراً", "thanks", "thank you",
+            "مين انت", "مين أنت", "انت مين", "أنت مين",
+            "بتعمل ايه", "بتعمل إيه", "ايه ده", "إيه ده",
+            "يعني ايه", "يعني إيه", "ok", "اوك", "أوك", "حسنا",
+            "ماشي", "تمام كدة", "اه", "أه", "لا", "مش عاوز",
+            "باي", "bye", "مع السلامة", "سلام",
+            "ايه الاخبار", "إيه الأخبار", "اخبارك ايه", "أخبارك إيه",
+            "كسم الحر", "الجو حر", "الطقس", "weather",
+            "what is your name", "who are you", "how are you",
+            "ايه اسمك", "إيه اسمك", "اسمك ايه", "اسمك إيه",
+            "good", "nice", "cool", "great",
+        }
+        if normalized in chitchat_exact:
+            return True
+
+        # Greeting-prefix patterns: if query STARTS with a greeting, it's chitchat
+        # even if it contains property-adjacent words like "يا عقاري"
+        greeting_prefixes = [
+            "ازيك", "إزيك", "اهلا", "أهلا", "هاي", "هالو",
+            "hello", "hi ", "hey ", "مرحبا", "يا هلا",
+            "صباح الخير", "مساء الخير", "السلام عليكم", "سلام عليكم",
+        ]
+        for prefix in greeting_prefixes:
+            if normalized.startswith(prefix):
+                return True
+
+        # Pattern-based: very short queries with no property keywords
+        if len(normalized.split()) <= 3:
+            property_hints = {
+                "شقة", "شقق", "فيلا", "عقار ", "عقارات", "كمبوند",
+                "compound", "apartment", "villa", "duplex", "chalet",
+                "للبيع", "للايجار", "للإيجار", "إيجار", "ايجار",
+                "شراء", "بيع", "غرف", "غرفة", "متر",
+                "تجمع", "زايد", "اكتوبر", "ساحل", "العاصمة",
+                "ابحث", "دور", "عاوز شقة", "عايز شقة",
+            }
+            if not any(hint in normalized for hint in property_hints):
+                return True
+
+        return False
 
     def _is_scoring_explanation_intent(self, query: str) -> bool:
         raw_query = str(query or "").strip().lower()
@@ -1769,25 +1834,25 @@ class RAGService:
             history = []
 
         if not final_docs:
-            content = "مش لاقي نتائج مناسبة للطلب ده في قاعدة البيانات الحالية. جرّب توسّع المنطقة أو الميزانية شوية."
+            content = "للأسف مش لاقي نتائج مناسبة للطلب ده حاليًا في قاعدة البيانات 😕\nجرّب توسّع المنطقة أو الميزانية شوية وأنا هساعدك."
             history.append(HumanMessage(content=query))
             history.append(AIMessage(content=content))
             return content, []
 
         status_text = str(search_status or "")
         if status_text.startswith("Excellent Match"):
-            opening = "تمام، لقيت لك أفضل النتائج المطابقة لطلبك:"
+            opening = "إليك أفضل النتائج المطابقة لطلبك 🏠✨"
         elif status_text.startswith("Partial Match"):
-            opening = "لقيت شوية نتائج قريبة جدًا من طلبك، وكملت لك بأفضل بدائل في نفس النطاق:"
+            opening = "لقيتلك نتائج قريبة جدًا من طلبك، بص عليها 👇"
         else:
-            opening = "مفيش تطابق كامل بنفس الشروط، فدي أقرب بدائل متاحة حاليًا:"
+            opening = "مفيش تطابق كامل بنفس الشروط، بس دي أقرب بدائل ليك 🔍"
 
         summary_count = self._result_limit(
             settings.fast_response_summary_items,
             5,
             max(1, len(final_docs)),
         )
-        lines = [opening]
+        lines = [opening, ""]
         for idx, doc in enumerate(final_docs[:summary_count], start=1):
             meta = doc.metadata if isinstance(doc.metadata, dict) else {}
             title = str(meta.get("title") or "عقار مناسب").strip()
@@ -1800,20 +1865,21 @@ class RAGService:
                 specs.append(f"{bedrooms} غرف")
             if size:
                 specs.append(f"{size} م²")
-            spec_text = f" ({'، '.join(specs)})" if specs else ""
-            lines.append(f"{idx}. {title} في {location} بسعر {price}{spec_text}.")
+            spec_text = f" ({' • '.join(specs)})" if specs else ""
+            lines.append(f"{idx}. **{title}** — {location}\n   💰 {price}{spec_text}")
 
         best_doc = final_docs[0]
         best_meta = best_doc.metadata if isinstance(best_doc.metadata, dict) else {}
         best_title = str(best_meta.get("title") or "أول اختيار").strip()
         services = self._normalize_services(best_meta.get("nearby_services", []))
+        lines.append("")
         if services:
-            lines.append(f"أقوى ترشيح عندي: {best_title}، لأنه مرتب عاليًا ومعاه خدمات قريبة زي {', '.join(services[:3])}.")
+            lines.append(f"⭐ أقوى ترشيح: **{best_title}** — خدمات قريبة: {', '.join(services[:3])}")
         else:
-            lines.append(f"أقوى ترشيح عندي: {best_title}، لأنه الأقرب لشروطك بين النتائج المتاحة.")
+            lines.append(f"⭐ أقوى ترشيح: **{best_title}** — الأقرب لشروطك بين النتائج")
 
         if len(final_docs) > summary_count:
-            lines.append(f"ورجعت لك {len(final_docs)} نتيجة مطابقة في الكروت، مرتبين حسب الأقرب والأفضل.")
+            lines.append(f"\n📋 إجمالي {len(final_docs)} نتيجة متاحة، مرتبين بالأفضل.")
 
         content = "\n".join(lines).strip()
         history.append(HumanMessage(content=query))
@@ -1842,29 +1908,21 @@ class RAGService:
         
         # Translated to English while keeping the persona and output style consistent
         template = """
-        You are "AqarAI", a highly intelligent, direct, and practical Real Estate Consultant and Broker.
-        You act like a trusted adviser who knows the market, negotiates firmly, and presents the best deals clearly.
-        Your mission is to provide rapid, direct answers with expert broker insight and no unnecessary talk.
+        You are "AqarAI", a premium Real Estate AI Consultant.
+        Speak in elegant, confident Egyptian Arabic dialect.
 
-        [Actual Database Search Status Context]: 
-        {search_status}
+        [Search Status]: {search_status}
+        [Properties]: {context}
+        [User Query]: {question}
 
-        [Available Properties Context for Display]:
-        {context}
-
-        User Request: 
-        {question}
-
-        System Instructions (Follow these strictly):
-        1. **Context Adherence**: Phrase your opening response exactly matching the [Search Status Context].
-           - If "Excellent Match" or "Partial Match": Confidently present the properties immediately ("Based on your request, here are the best available properties:").
-           - If "Alert": Apologize politely, state the reason defined in the alert, and present the alternatives.
-        2. **Do Not Interrogate**: NEVER ask the user questions (e.g., "What is your budget?" or "How many rooms?"). Just display the inventory.
-        3. **Tone**: Speak in an elegant, confident, and direct Egyptian Arabic dialect. Summarize properties attractively without listing numerical IDs.
-        4. **Best Option Guidance**: If one property has clearly better score/value/location proximity, explicitly recommend it as the best option and explain why briefly.
-        5. **Nearby Services Awareness**: Mention key nearby services when available (e.g., schools, hospitals, mall, transport).
-        6. **Media Rendering**:
-           - **CRITICAL**: You MUST append exactly `[SHOW_CARDS]` on a new standalone line at the very end of your response to trigger UI rendering.
+        STRICT RULES:
+        1. Start with a warm, polished opening like "إليك أفضل النتائج لطلبك 🏠" or "لقيتلك اختيارات ممتازة 👇".
+        2. Summarize the top 2-3 properties attractively — mention title, location, price, and key specs.
+        3. Recommend the best option with a brief reason (value, location, services).
+        4. NEVER ask the user questions. Just present what you have confidently.
+        5. NEVER show property IDs. Use titles and locations instead.
+        6. If services are available, mention them naturally.
+        7. End with exactly `[SHOW_CARDS]` on its own line.
         
         Your Response:
         """
@@ -1928,11 +1986,16 @@ class RAGService:
             return "أقدر أساعدك، لكن مفاتيح نماذج الذكاء مش متوفرة حاليًا.", []
         
         template = """
-        You are "AqarAI", a skilled Real Estate Consultant and Broker.
-        You can chat about real estate topics, answer general questions, and act as an adviser who knows the market well.
-        Keep responses in Egyptian Arabic dialect, be helpful and trustworthy.
-        If the user asks about properties, guide them to specify location, budget, and preferences clearly.
-        Do not show property cards for conversational responses.
+        You are "AqarAI", a friendly and professional Real Estate AI Consultant.
+        
+        STRICT RULES:
+        1. Speak in warm, natural Egyptian Arabic dialect.
+        2. You ONLY help with real estate topics. If the question is NOT about properties, politely redirect.
+        3. NEVER mention or list any property data. You have NO properties to show in this context.
+        4. NEVER invent or fabricate property listings.
+        5. If the user wants to search for properties, guide them to specify: المنطقة (location), الميزانية (budget), عدد الغرف (rooms).
+        6. Keep responses short (2-3 sentences max) and friendly.
+        7. Do NOT output [SHOW_CARDS] or any system tags.
         
         Chat History:
         {history}
@@ -1950,6 +2013,8 @@ class RAGService:
         try:
             response = llm.invoke(messages)
             content = response.content if hasattr(response, 'content') else str(response)
+            # Strip any accidental SHOW_CARDS tags from conversational responses
+            content = content.replace("[SHOW_CARDS]", "").replace("SHOW_CARDS", "").strip()
             return content.strip(), []
         except Exception as e:
             logger.error(f"Conversational LLM Error: {e}")

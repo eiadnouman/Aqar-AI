@@ -155,7 +155,9 @@ class VectorStoreManager:
 
     def _catalog_row_from_external(self, row: Dict[str, Any]) -> Dict[str, Any]:
         description = row.get("property_desc", "") or row.get("description", "")
-        image = self._first_image(row.get("images"))
+        raw_image = self._first_image(row.get("images"))
+        # Resolve relative image paths to full URLs
+        image = self._resolve_full_image_url(raw_image)
         property_type = row.get("property_type", "")
         return {
             "property_id": self._safe_int(row.get("property_id") or row.get("id")),
@@ -458,3 +460,110 @@ class VectorStoreManager:
             if any(keyword in blob for keyword in keywords):
                 found.append(canonical)
         return found
+
+    def _resolve_full_image_url(self, image_path: str) -> str:
+        """Resolves a relative image path to a full URL using the external base URL."""
+        raw = str(image_path or "").strip()
+        if not raw:
+            return ""
+        # Already a full URL
+        if raw.startswith(("http://", "https://")):
+            return raw
+        # Build full URL from base
+        base_url = (settings.property_public_base_url or settings.external_api_base_url or "").rstrip("/")
+        if base_url:
+            return f"{base_url}/{raw.lstrip('/')}"
+        return raw
+
+    def refresh_from_external(self) -> bool:
+        """Re-syncs property data from the external API and rebuilds the FAISS index in-memory."""
+        base_url = (settings.external_api_base_url or "").rstrip("/")
+        api_key = (settings.internal_api_key or "").strip()
+        if not base_url or not api_key:
+            logger.warning("Cannot refresh: EXTERNAL_API_BASE_URL or INTERNAL_API_KEY not configured.")
+            return False
+
+        try:
+            response = requests.get(
+                f"{base_url}/internal/ai-sync",
+                headers={"x-api-key": api_key},
+                timeout=max(settings.external_api_timeout_sec, 30),
+            )
+            response.raise_for_status()
+            rows = response.json()
+            if not isinstance(rows, list):
+                logger.warning("External sync returned non-list payload during refresh.")
+                return False
+
+            # Reset catalogs
+            self.property_lookup.clear()
+            self.property_signature_lookup.clear()
+            self.available_locations.clear()
+            self.available_services.clear()
+
+            for raw_row in rows:
+                if isinstance(raw_row, dict):
+                    self._remember_catalog_row(self._catalog_row_from_external(raw_row))
+
+            logger.info(f"Refreshed catalog with {len(rows)} properties from external API.")
+
+            # Rebuild FAISS index in-memory from fresh data
+            if self.embeddings:
+                import json as _json
+                docs: List[Document] = []
+                for raw_row in rows:
+                    if not isinstance(raw_row, dict):
+                        continue
+                    property_id = self._safe_int(raw_row.get("property_id") or raw_row.get("id"))
+                    if not property_id:
+                        continue
+
+                    title = str(raw_row.get("property_name") or raw_row.get("title") or f"Property {property_id}").strip()
+                    desc = str(raw_row.get("property_desc") or raw_row.get("description") or "").strip()
+                    loc = str(raw_row.get("location") or "").strip()
+                    ptype_raw = str(raw_row.get("property_type") or "").lower()
+                    ptype = "Apartment"
+                    if any(t in (title + desc).lower() for t in ["villa", "فيلا"]):
+                        ptype = "Villa"
+                    elif any(t in (title + desc).lower() for t in ["duplex", "دوبلكس"]):
+                        ptype = "Duplex"
+                    listing_intent = self._infer_listing_intent_from_type(ptype_raw)
+                    raw_image = self._first_image(raw_row.get("images"))
+                    image = self._resolve_full_image_url(raw_image)
+                    url = str(raw_row.get("url") or f"{base_url}/property/{property_id}").strip()
+
+                    content = f"passage: Title: {title}\nLocation: {loc}\nType: {ptype}\nDescription: {desc}"
+                    metadata = {
+                        "id": property_id,
+                        "property_id": property_id,
+                        "url": url,
+                        "title": title,
+                        "location": loc,
+                        "type": ptype,
+                        "listing_intent": listing_intent,
+                        "price": self._safe_float(raw_row.get("price_value") or raw_row.get("price_per_day")),
+                        "bedrooms": self._safe_float(raw_row.get("bedrooms_no") or raw_row.get("bedrooms")),
+                        "bathrooms": self._safe_float(raw_row.get("bathrooms_no") or raw_row.get("bathrooms")),
+                        "size": self._safe_float(raw_row.get("size") or raw_row.get("size_value")),
+                        "lat": self._safe_float(raw_row.get("latitude") or raw_row.get("lat")),
+                        "lon": self._safe_float(raw_row.get("longitude") or raw_row.get("lon")),
+                        "image": image,
+                    }
+                    docs.append(Document(page_content=content, metadata=metadata))
+
+                if docs:
+                    self.vectorstore = FAISS.from_documents(docs, self.embeddings)
+                    self._extract_dynamic_locations()
+                    self._initialize_bm25()
+                    logger.info(f"FAISS index rebuilt in-memory with {len(docs)} documents.")
+                    return True
+                else:
+                    logger.warning("No documents to rebuild FAISS from.")
+                    return False
+            else:
+                logger.warning("Embeddings unavailable; skipping FAISS rebuild during refresh.")
+                return False
+
+        except Exception as e:
+            logger.error(f"External data refresh failed: {e}")
+            return False

@@ -28,7 +28,8 @@ class _FakeRAGService:
         return {"query": query, **(explicit_filters or {})}, [_sample_doc(1)]
 
     def recommend_similar(self, _description, k=5):
-        return [_sample_doc(i) for i in range(1, min(k, 2) + 1)]
+        limit = k if k is not None else 5
+        return [_sample_doc(i) for i in range(1, min(limit, 2) + 1)]
 
     def get_recommendation(self, _query, session_id=None):
         return "ok", []

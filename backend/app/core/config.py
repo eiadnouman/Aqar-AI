@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     property_public_base_url: Optional[str] = None
     interaction_cache_ttl_sec: int = 3600
     cors_allowed_origins: str = "*"
+    data_sync_interval_minutes: int = 30
 
     # Runtime performance knobs
     fast_filter_extraction: bool = True

@@ -19,15 +19,22 @@ class Property(BaseModel):
     nearby_services: List[str] = Field(default_factory=list)
     recommendation_score: Optional[float] = None
 
+class ComparisonItem(BaseModel):
+    """Lightweight property summary for quick comparison UI cards."""
+    id: Optional[int] = Field(None, description="Property ID")
+    title: str = Field("", description="Property title")
+    image_url: str = Field("", description="Full URL to property image")
+
 class ChatRequest(BaseModel):
     """Payload for conversational queries."""
     message: str = Field(..., description="The user's query about real estate")
     session_id: Optional[str] = Field(None, description="Optional session ID to persist memory context")
 
 class ChatResponse(BaseModel):
-    """Response containing AI analysis and properties."""
+    """Unified response containing AI analysis, full properties, and comparison cards."""
     answer: str
-    properties: List[Property]
+    properties: List[Property] = []
+    comparison: List[ComparisonItem] = []
     
 class SearchRequest(BaseModel):
     """Payload for headless search queries."""

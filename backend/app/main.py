@@ -1,4 +1,4 @@
-from threading import Thread
+from threading import Thread, Timer
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,6 +47,34 @@ async def health_check():
     }
 
 
+# ===== Periodic Data Sync =====
+
+_sync_timer = None
+
+
+def _run_periodic_sync():
+    """Background task that refreshes data from the external API and rebuilds the index."""
+    global _sync_timer
+    try:
+        rag = get_rag_service()
+        vs = getattr(rag, "vector_store", None)
+        if vs and hasattr(vs, "refresh_from_external"):
+            logger.info("Periodic data sync: starting refresh from external API...")
+            success = vs.refresh_from_external()
+            if success:
+                logger.info("Periodic data sync: completed successfully.")
+            else:
+                logger.warning("Periodic data sync: refresh returned False.")
+    except Exception as e:
+        logger.error(f"Periodic data sync failed: {e}")
+    finally:
+        # Schedule the next sync
+        interval = max(settings.data_sync_interval_minutes, 1) * 60
+        _sync_timer = Timer(interval, _run_periodic_sync)
+        _sync_timer.daemon = True
+        _sync_timer.start()
+
+
 @app.on_event("startup")
 def warm_rag_service():
     """Preload the heavy retrieval stack after Uvicorn starts accepting traffic."""
@@ -57,7 +85,22 @@ def warm_rag_service():
         except Exception as e:
             logger.error(f"RAG service warmup failed: {e}")
 
+        # Start periodic sync after initial warmup
+        _schedule_first_sync()
+
     Thread(target=_warm, daemon=True).start()
+
+
+def _schedule_first_sync():
+    """Kick off the first periodic data sync after a brief delay."""
+    global _sync_timer
+    # First sync after 10 seconds (let startup complete), then every N minutes
+    _sync_timer = Timer(10, _run_periodic_sync)
+    _sync_timer.daemon = True
+    _sync_timer.start()
+    interval = settings.data_sync_interval_minutes
+    logger.info(f"Periodic data sync scheduled every {interval} minutes.")
+
 
 @app.get("/", tags=["System"])
 async def root():
