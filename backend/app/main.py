@@ -64,8 +64,19 @@ async def health_check():
 
     # Check for crucial environment variables (mask content)
     import os
+    import socket
     diagnostics["env_groq_api_key_set"] = bool(os.getenv("GROQ_API_KEY"))
     diagnostics["env_huggingface_token_set"] = bool(os.getenv("HUGGINGFACEHUB_API_TOKEN"))
+
+    # DNS checks
+    dns_results = {}
+    for host in ["google.com", "api.groq.com", "huggingface.co", "api-inference.huggingface.co"]:
+        try:
+            ip = socket.gethostbyname(host)
+            dns_results[host] = f"OK: {ip}"
+        except Exception as e:
+            dns_results[host] = f"ERROR: {str(e)}"
+    diagnostics["dns_resolution"] = dns_results
 
     return {
         "status": status,
