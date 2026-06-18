@@ -89,6 +89,8 @@ class VectorStoreManager:
     Abstracts embedding models and raw dataset interactions.
     """
     def __init__(self):
+        self.embeddings_error: Optional[str] = None
+        self.load_index_error: Optional[str] = None
         self.embeddings = self._initialize_embeddings()
         self.vectorstore: Optional[FAISS] = None
         self.bm25_model: Optional[BM25Okapi] = None
@@ -108,6 +110,7 @@ class VectorStoreManager:
         (zero RAM overhead, ideal for Railway/cloud). Falls back to local
         PyTorch-based SentenceTransformers if the API is unreachable (local dev).
         """
+        errors = []
         # --- Strategy 1: HF Inference API (cloud-friendly, ~0 RAM) ---
         try:
             api_token = (getattr(settings, "huggingfacehub_api_token", None) or "").strip() or None
@@ -119,7 +122,9 @@ class VectorStoreManager:
             logger.info("HF Inference API embeddings initialized successfully (cloud mode).")
             return embeddings
         except Exception as e:
-            logger.warning(f"HF Inference API unavailable ({e}); falling back to local model.")
+            err_msg = f"HF Inference API unavailable: {e}"
+            logger.warning(err_msg)
+            errors.append(err_msg)
 
         # --- Strategy 2: Local PyTorch SentenceTransformers (dev fallback) ---
         try:
@@ -141,13 +146,17 @@ class VectorStoreManager:
             logger.info("Local SentenceTransformer embeddings initialized (dev mode).")
             return embeddings
         except Exception as e:
-            logger.error(f"Failed to initialize any embeddings backend: {e}")
+            err_msg = f"Local SentenceTransformer fallback failed: {e}"
+            logger.error(err_msg)
+            errors.append(err_msg)
+            self.embeddings_error = " -> ".join(errors)
             return None
 
     def _load_index(self):
         """Loads the FAISS index from the configured disk path."""
         if not self.embeddings:
             logger.error("Embeddings are unavailable; skipping FAISS index loading.")
+            self.load_index_error = "Embeddings are unavailable (none initialized)."
             return
 
         if os.path.exists(settings.faiss_index_path):
@@ -162,9 +171,13 @@ class VectorStoreManager:
                 self._extract_dynamic_locations()
                 self._initialize_bm25()
             except Exception as e:
-                logger.error(f"Failed to load vector index: {e}")
+                err_msg = f"Failed to load vector index: {e}"
+                logger.error(err_msg)
+                self.load_index_error = err_msg
         else:
-            logger.error(f"FAISS Index Path NOT FOUND at: {os.path.abspath(settings.faiss_index_path)}")
+            err_msg = f"FAISS Index Path NOT FOUND at: {os.path.abspath(settings.faiss_index_path)}"
+            logger.error(err_msg)
+            self.load_index_error = err_msg
 
     def _load_property_catalog(self):
         """

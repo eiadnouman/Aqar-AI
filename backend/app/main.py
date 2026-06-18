@@ -40,10 +40,37 @@ app.include_router(interactions.router, prefix="/api/v1", tags=["Interactions"])
 
 @app.get("/health", tags=["System"])
 async def health_check():
-    """System health checkpoint."""
+    """System health checkpoint with diagnostics."""
+    status = "healthy"
+    diagnostics = {}
+    try:
+        rag = get_rag_service()
+        vs = getattr(rag, "vector_store", None)
+        if vs:
+            diagnostics["embeddings_class"] = vs.embeddings.__class__.__name__ if vs.embeddings else None
+            diagnostics["vectorstore_loaded"] = vs.vectorstore is not None
+            diagnostics["embeddings_error"] = vs.embeddings_error
+            diagnostics["load_index_error"] = vs.load_index_error
+            diagnostics["properties_count"] = len(vs.all_docs_list)
+            diagnostics["locations_count"] = len(vs.available_locations)
+            if not vs.vectorstore:
+                status = "degraded"
+        else:
+            status = "degraded"
+            diagnostics["error"] = "vector_store not initialized on RAG service"
+    except Exception as e:
+        status = "unhealthy"
+        diagnostics["error"] = str(e)
+
+    # Check for crucial environment variables (mask content)
+    import os
+    diagnostics["env_groq_api_key_set"] = bool(os.getenv("GROQ_API_KEY"))
+    diagnostics["env_huggingface_token_set"] = bool(os.getenv("HUGGINGFACEHUB_API_TOKEN"))
+
     return {
-        "status": "healthy",
-        "version": settings.version
+        "status": status,
+        "version": settings.version,
+        "diagnostics": diagnostics
     }
 
 
