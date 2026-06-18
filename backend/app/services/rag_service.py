@@ -34,7 +34,7 @@ class RAGService:
     def get_recommendation(self, query: str, session_id: str = None) -> Tuple[str, List[Document]]:
         """Handles conversational interaction, processing filters and returning contextual replies."""
         if self._is_greeting(query):
-            response_text = self._build_greeting_response()
+            response_text = self._build_greeting_response(query)
             if session_id:
                 if session_id not in self.sessions:
                     self.sessions[session_id] = {}
@@ -475,11 +475,18 @@ class RAGService:
         return normalized in {phrase.lower() for phrase in greeting_phrases}
 
     @staticmethod
-    def _build_greeting_response() -> str:
-        return (
-            "أهلاً بيك! أنا AqarAI، أقدر أساعدك تلاقي شقة أو عقار مناسب. "
-            "اكتبلي المنطقة والميزانية وعدد الغرف، وأنا أطلعلك أفضل الاختيارات المتاحة."
-        )
+    def _build_greeting_response(query: str) -> str:
+        is_arabic_query = bool(re.search(r"[\u0600-\u06FF]", query))
+        if is_arabic_query:
+            return (
+                "أهلاً بيك! أنا AqarAI، أقدر أساعدك تلاقي شقة أو عقار مناسب. "
+                "اكتبلي المنطقة والميزانية وعدد الغرف، وأنا أطلعلك أفضل الاختيارات المتاحة."
+            )
+        else:
+            return (
+                "Hello! I am AqarAI, your smart real estate consultant. "
+                "Please tell me the area, budget, and number of bedrooms, and I will find the best options for you."
+            )
 
     def _is_inventory_stats_intent(self, query: str, filters: Optional[Dict[str, Any]] = None) -> bool:
         raw_query = str(query or "").strip().lower()
@@ -1828,24 +1835,47 @@ class RAGService:
             parsed = default
         return max(1, min(parsed, hard_max))
 
+    def _format_price_text_en(self, value: Any) -> str:
+        price = self._safe_float(value)
+        if price <= 0:
+            return "Unspecified Price"
+        if price >= 1_000_000:
+            amount = price / 1_000_000
+            text = f"{amount:.1f}".rstrip("0").rstrip(".")
+            return f"{text} Million EGP"
+        return f"{price:,.0f} EGP"
+
     def _generate_fast_property_response(self, query, search_status, final_docs, history=None):
-        """Builds a low-latency Arabic response from ranked docs without a second LLM call."""
+        """Builds a low-latency response from ranked docs matching the query's language (Arabic or English)."""
         if history is None:
             history = []
 
+        is_arabic_query = bool(re.search(r"[\u0600-\u06FF]", query))
+
         if not final_docs:
-            content = "للأسف مش لاقي نتائج مناسبة للطلب ده حاليًا في قاعدة البيانات 😕\nجرّب توسّع المنطقة أو الميزانية شوية وأنا هساعدك."
+            if is_arabic_query:
+                content = "للأسف مش لاقي نتائج مناسبة للطلب ده حاليًا في قاعدة البيانات 😕\nجرّب توسّع المنطقة أو الميزانية شوية وأنا هساعدك."
+            else:
+                content = "Unfortunately, I couldn't find matching properties in the database right now 😕\nTry widening the location or budget, and I'll help you search."
             history.append(HumanMessage(content=query))
             history.append(AIMessage(content=content))
             return content, []
 
         status_text = str(search_status or "")
-        if status_text.startswith("Excellent Match"):
-            opening = "إليك أفضل النتائج المطابقة لطلبك 🏠✨"
-        elif status_text.startswith("Partial Match"):
-            opening = "لقيتلك نتائج قريبة جدًا من طلبك، بص عليها 👇"
+        if is_arabic_query:
+            if status_text.startswith("Excellent Match"):
+                opening = "إليك أفضل النتائج المطابقة لطلبك 🏠✨"
+            elif status_text.startswith("Partial Match"):
+                opening = "لقيتلك نتائج قريبة جدًا من طلبك، بص عليها 👇"
+            else:
+                opening = "مفيش تطابق كامل بنفس الشروط، بس دي أقرب بدائل ليك 🔍"
         else:
-            opening = "مفيش تطابق كامل بنفس الشروط، بس دي أقرب بدائل ليك 🔍"
+            if status_text.startswith("Excellent Match"):
+                opening = "Here are the best matching properties for your request 🏠✨"
+            elif status_text.startswith("Partial Match"):
+                opening = "I found some very close options for you, take a look 👇"
+            else:
+                opening = "No exact match found, but here are the closest alternatives 🔍"
 
         summary_count = self._result_limit(
             settings.fast_response_summary_items,
@@ -1855,31 +1885,50 @@ class RAGService:
         lines = [opening, ""]
         for idx, doc in enumerate(final_docs[:summary_count], start=1):
             meta = doc.metadata if isinstance(doc.metadata, dict) else {}
-            title = str(meta.get("title") or "عقار مناسب").strip()
-            location = str(meta.get("location") or "منطقة غير محددة").strip()
-            price = self._format_price_text(meta.get("price"))
+            title = str(meta.get("title") or ("عقار مناسب" if is_arabic_query else "Suitable Property")).strip()
+            location = str(meta.get("location") or ("منطقة غير محددة" if is_arabic_query else "Unspecified Location")).strip()
             bedrooms = self._safe_int_value(meta.get("bedrooms"))
             size = self._safe_int_value(meta.get("size"))
             specs = []
-            if bedrooms:
-                specs.append(f"{bedrooms} غرف")
-            if size:
-                specs.append(f"{size} م²")
-            spec_text = f" ({' • '.join(specs)})" if specs else ""
-            lines.append(f"{idx}. **{title}** — {location}\n   💰 {price}{spec_text}")
+
+            if is_arabic_query:
+                price = self._format_price_text(meta.get("price"))
+                if bedrooms:
+                    specs.append(f"{bedrooms} غرف")
+                if size:
+                    specs.append(f"{size} م²")
+                spec_text = f" ({' • '.join(specs)})" if specs else ""
+                lines.append(f"{idx}. **{title}** — {location}\n   💰 {price}{spec_text}")
+            else:
+                price = self._format_price_text_en(meta.get("price"))
+                if bedrooms:
+                    specs.append(f"{bedrooms} BR")
+                if size:
+                    specs.append(f"{size} sqm")
+                spec_text = f" ({' • '.join(specs)})" if specs else ""
+                lines.append(f"{idx}. **{title}** — {location}\n   💰 {price}{spec_text}")
 
         best_doc = final_docs[0]
         best_meta = best_doc.metadata if isinstance(best_doc.metadata, dict) else {}
-        best_title = str(best_meta.get("title") or "أول اختيار").strip()
+        best_title = str(best_meta.get("title") or ("أول اختيار" if is_arabic_query else "Top Pick")).strip()
         services = self._normalize_services(best_meta.get("nearby_services", []))
         lines.append("")
-        if services:
-            lines.append(f"⭐ أقوى ترشيح: **{best_title}** — خدمات قريبة: {', '.join(services[:3])}")
+        if is_arabic_query:
+            if services:
+                lines.append(f"⭐ أقوى ترشيح: **{best_title}** — خدمات قريبة: {', '.join(services[:3])}")
+            else:
+                lines.append(f"⭐ أقوى ترشيح: **{best_title}** — الأقرب لشروطك بين النتائج")
         else:
-            lines.append(f"⭐ أقوى ترشيح: **{best_title}** — الأقرب لشروطك بين النتائج")
+            if services:
+                lines.append(f"⭐ Top Recommendation: **{best_title}** — Nearby services: {', '.join(services[:3])}")
+            else:
+                lines.append(f"⭐ Top Recommendation: **{best_title}** — The closest to your requirements")
 
         if len(final_docs) > summary_count:
-            lines.append(f"\n📋 إجمالي {len(final_docs)} نتيجة متاحة، مرتبين بالأفضل.")
+            if is_arabic_query:
+                lines.append(f"\n📋 إجمالي {len(final_docs)} نتيجة متاحة، مرتبين بالأفضل.")
+            else:
+                lines.append(f"\n📋 Total of {len(final_docs)} results available, ordered by preference.")
 
         content = "\n".join(lines).strip()
         history.append(HumanMessage(content=query))
@@ -1906,18 +1955,21 @@ class RAGService:
             logger.error(f"LLM initialization error: {e}")
             return "آسف، الخدمة الذكية غير متاحة حاليًا. حاول مرة تانية بعد شوية.", []
         
-        # Translated to English while keeping the persona and output style consistent
         template = """
         You are "AqarAI", a premium Real Estate AI Consultant.
-        Speak in elegant, confident Egyptian Arabic dialect.
+        
+        LANGUAGE RULE:
+        - Detect the language of [User Query].
+        - If the query is in Arabic (or Egyptian Arabic), respond in elegant, confident Egyptian Arabic dialect. Translate any English property names, descriptions, or locations to Egyptian Arabic (e.g. explain/translate the English titles into Arabic).
+        - If the query is in English, respond in professional, friendly English. Translate any Arabic property names, descriptions, or locations to English.
 
         [Search Status]: {search_status}
         [Properties]: {context}
         [User Query]: {question}
 
         STRICT RULES:
-        1. Start with a warm, polished opening like "إليك أفضل النتائج لطلبك 🏠" or "لقيتلك اختيارات ممتازة 👇".
-        2. Summarize the top 2-3 properties attractively — mention title, location, price, and key specs.
+        1. Start with a warm, polished opening (e.g. "إليك أفضل النتائج لطلبك 🏠" or "لقيتلك اختيارات ممتازة 👇" in Arabic, or "Here are the best options for your request 🏠" in English).
+        2. Summarize the top 2-3 properties attractively — mention title, location, price, and key specs. Make sure they are translated to the detected language!
         3. Recommend the best option with a brief reason (value, location, services).
         4. NEVER ask the user questions. Just present what you have confidently.
         5. NEVER show property IDs. Use titles and locations instead.
@@ -1964,7 +2016,7 @@ class RAGService:
             content_clean = content.replace("[SHOW_CARDS]", "").replace("SHOW_CARDS", "").strip()
             
             # Heuristic trigger failsafes
-            if final_docs and ("شقة" in query or "فيلا" in query or "عقار" in query or "تجمع" in query or "زايد" in query):
+            if final_docs and ("شقة" in query or "فيلا" in query or "عقار" in query or "تجمع" in query or "زايد" in query or "apartment" in query.lower() or "villa" in query.lower()):
                 show_cards = True
                 
             final_docs_to_return = final_docs if show_cards else []
@@ -1988,14 +2040,18 @@ class RAGService:
         template = """
         You are "AqarAI", a friendly and professional Real Estate AI Consultant.
         
+        LANGUAGE RULE:
+        - Detect the language of the user's message.
+        - If the message is in Arabic (or Egyptian Arabic), speak in warm, natural Egyptian Arabic dialect.
+        - If the message is in English, speak in professional, warm English.
+        
         STRICT RULES:
-        1. Speak in warm, natural Egyptian Arabic dialect.
-        2. You ONLY help with real estate topics. If the question is NOT about properties, politely redirect.
-        3. NEVER mention or list any property data. You have NO properties to show in this context.
-        4. NEVER invent or fabricate property listings.
-        5. If the user wants to search for properties, guide them to specify: المنطقة (location), الميزانية (budget), عدد الغرف (rooms).
-        6. Keep responses short (2-3 sentences max) and friendly.
-        7. Do NOT output [SHOW_CARDS] or any system tags.
+        1. You ONLY help with real estate topics. If the question is NOT about properties, politely redirect in the detected language.
+        2. NEVER mention or list any property data. You have NO properties to show in this context.
+        3. NEVER invent or fabricate property listings.
+        4. If the user wants to search for properties, guide them to specify: المنطقة (location), الميزانية (budget), عدد الغرف (rooms) in the detected language.
+        5. Keep responses short (2-3 sentences max) and friendly.
+        6. Do NOT output [SHOW_CARDS] or any system tags.
         
         Chat History:
         {history}
