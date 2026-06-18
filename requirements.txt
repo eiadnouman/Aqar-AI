@@ -11,3 +11,4 @@ requests
 python-dotenv
 rank-bm25
 uvicorn
+huggingface_hub

@@ -23,7 +23,7 @@ class HFInferenceEmbeddings(Embeddings):
 
     def __init__(self, model_name: str = "intfloat/multilingual-e5-small", api_token: Optional[str] = None):
         self.model_name = model_name
-        self.api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_name}"
+        self.api_url = f"https://router.huggingface.co/hf-inference/models/{model_name}/pipeline/feature-extraction"
         self.headers = {"Content-Type": "application/json"}
         if api_token:
             self.headers["Authorization"] = f"Bearer {api_token}"
