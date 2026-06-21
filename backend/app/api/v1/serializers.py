@@ -1,5 +1,6 @@
+import json
 import re
-from typing import Optional
+from typing import Any, List, Optional
 from urllib.parse import urlparse, urlunparse
 
 from app.core.config import settings
@@ -18,6 +19,39 @@ def safe_int(value, default=0):
         return int(float(value))
     except Exception:
         return default
+
+
+def safe_bool(value) -> Optional[bool]:
+    if value in (None, ""):
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    text = str(value).strip().lower()
+    if text in {"1", "true", "yes", "y"}:
+        return True
+    if text in {"0", "false", "no", "n"}:
+        return False
+    return None
+
+
+def safe_list(value: Any) -> List[str]:
+    if value in (None, ""):
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value if item not in (None, "")]
+    if isinstance(value, str):
+        text = value.strip()
+        if text.startswith("["):
+            try:
+                parsed = json.loads(text)
+                if isinstance(parsed, list):
+                    return [str(item) for item in parsed if item not in (None, "")]
+            except Exception:
+                pass
+        return [text] if text else []
+    return [str(value)]
 
 
 def resolve_property_id(meta: dict) -> Optional[int]:
@@ -71,16 +105,50 @@ def normalize_external_url(value: str) -> str:
 
 def doc_to_property(doc) -> Property:
     meta = doc.metadata if isinstance(doc.metadata, dict) else {}
+    description = str(meta.get("property_desc") or meta.get("description") or doc.page_content.split("Description: ")[-1])
+    images = [normalize_external_url(item) for item in safe_list(meta.get("images"))]
+    image_url = normalize_external_url(meta.get("image") or meta.get("image_url") or (images[0] if images else ""))
+    if image_url and image_url not in images:
+        images.insert(0, image_url)
+
+    property_id = resolve_property_id(meta)
+    property_name = meta.get("property_name") or meta.get("title", "Property Listing")
+    price_value = safe_float(meta.get("price_value") or meta.get("price") or 0)
+    price_per_day = safe_float(meta.get("price_per_day") or meta.get("price") or 0)
+    bedrooms_no = safe_int(meta.get("bedrooms_no") or meta.get("bedrooms") or 0)
+    bathrooms_no = safe_int(meta.get("bathrooms_no") or meta.get("bathrooms") or 0)
+
     return Property(
-        id=resolve_property_id(meta),
-        title=meta.get("title", "Property Listing"),
+        property_id=property_id,
+        owner_id=meta.get("owner_id"),
+        property_name=property_name,
+        property_desc=description,
+        pricing_unit=meta.get("pricing_unit"),
+        price_value=price_value,
+        price_per_day=price_per_day,
+        bedrooms_no=bedrooms_no,
+        beds_no=safe_int(meta.get("beds_no") or meta.get("beds") or bedrooms_no or 0),
+        bathrooms_no=bathrooms_no,
+        images=images,
+        ownership_proofs=[normalize_external_url(item) for item in safe_list(meta.get("ownership_proofs"))],
+        listing_status=meta.get("listing_status"),
+        listing_expiry=str(meta.get("listing_expiry")) if meta.get("listing_expiry") else None,
+        is_visible=safe_bool(meta.get("is_visible")),
+        is_verified=safe_bool(meta.get("is_verified")),
+        is_available=safe_bool(meta.get("is_available")),
+        is_furnished=safe_bool(meta.get("is_furnished")),
+        is_sponsored=safe_bool(meta.get("is_sponsored")),
+        property_type=meta.get("property_type"),
+        rate=safe_float(meta.get("rate", 0)) if meta.get("rate") not in (None, "") else None,
+        id=property_id,
+        title=property_name,
         location=meta.get("location", "Unknown Location"),
-        price=safe_float(meta.get("price", 0)),
-        bedrooms=safe_int(meta.get("bedrooms", 0)),
-        bathrooms=safe_int(meta.get("bathrooms", 0)),
+        price=price_value,
+        bedrooms=bedrooms_no,
+        bathrooms=bathrooms_no,
         size=safe_float(meta.get("size", 0)),
-        image_url=normalize_external_url(meta.get("image", "")),
-        description=doc.page_content.split("Description: ")[-1][:200] + "...",
+        image_url=image_url,
+        description=description[:200] + "...",
         url=normalize_external_url(meta.get("url", "#")),
         latitude=safe_float(meta.get("lat") or meta.get("latitude") or 0) or None,
         longitude=safe_float(meta.get("lon") or meta.get("longitude") or 0) or None,

@@ -3,6 +3,31 @@ from typing import List, Optional, Dict, Any
 
 class Property(BaseModel):
     """Schema representing a Real Estate property."""
+    # RealEstateDB Property table fields. They are optional to keep old FAISS/CSV
+    # indexes valid until the next external sync rebuilds metadata from MySQL.
+    property_id: Optional[int] = Field(None, description="Database property_id")
+    owner_id: Optional[str] = None
+    property_name: Optional[str] = None
+    property_desc: Optional[str] = None
+    pricing_unit: Optional[str] = Field(None, description="DAY, MONTH, or YEAR")
+    price_value: Optional[float] = Field(None, description="Owner chosen value per pricing_unit")
+    price_per_day: Optional[float] = Field(None, description="Normalized daily price")
+    bedrooms_no: Optional[int] = None
+    beds_no: Optional[int] = None
+    bathrooms_no: Optional[int] = None
+    images: List[str] = Field(default_factory=list)
+    ownership_proofs: List[str] = Field(default_factory=list)
+    listing_status: Optional[str] = None
+    listing_expiry: Optional[str] = None
+    is_visible: Optional[bool] = None
+    is_verified: Optional[bool] = None
+    is_available: Optional[bool] = None
+    is_furnished: Optional[bool] = None
+    is_sponsored: Optional[bool] = None
+    property_type: Optional[str] = None
+    rate: Optional[float] = None
+
+    # Backward-compatible response fields used by the existing chat/search UI.
     id: Optional[int] = Field(None, description="Internal property ID, when available")
     title: str
     location: str

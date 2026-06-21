@@ -258,21 +258,49 @@ class VectorStoreManager:
         # Resolve relative image paths to full URLs
         image = self._resolve_full_image_url(raw_image)
         property_type = row.get("property_type", "")
+        property_id = self._safe_int(row.get("property_id") or row.get("id"))
+        price_value = self._safe_float(row.get("price_value") or row.get("price"))
+        price_per_day = self._safe_float(row.get("price_per_day") or price_value)
+        bedrooms_no = self._safe_int(row.get("bedrooms_no") or row.get("bedrooms"))
+        bathrooms_no = self._safe_int(row.get("bathrooms_no") or row.get("bathrooms"))
         return {
-            "property_id": self._safe_int(row.get("property_id") or row.get("id")),
+            "property_id": property_id,
+            "id": property_id,
+            "owner_id": row.get("owner_id"),
             "url": row.get("url", ""),
             "title": row.get("property_name") or row.get("title"),
+            "property_name": row.get("property_name") or row.get("title"),
+            "property_desc": description,
             "description": description,
             "location": row.get("location") or row.get("location_full_name"),
             "type": row.get("category") or row.get("unit_type") or row.get("real_estate_type") or "",
             "listing_intent": self._infer_listing_intent_from_type(property_type),
             "lat": self._safe_float(row.get("latitude") or row.get("lat")),
             "lon": self._safe_float(row.get("longitude") or row.get("lon")),
-            "price": self._safe_float(row.get("price_value") or row.get("price_per_day")),
-            "bedrooms": self._safe_float(row.get("bedrooms_no") or row.get("bedrooms")),
-            "bathrooms": self._safe_float(row.get("bathrooms_no") or row.get("bathrooms")),
+            "latitude": self._safe_float(row.get("latitude") or row.get("lat")),
+            "longitude": self._safe_float(row.get("longitude") or row.get("lon")),
+            "pricing_unit": row.get("pricing_unit"),
+            "price_value": price_value,
+            "price_per_day": price_per_day,
+            "price": price_value or price_per_day,
+            "bedrooms_no": bedrooms_no,
+            "beds_no": self._safe_int(row.get("beds_no") or row.get("beds") or bedrooms_no),
+            "bathrooms_no": bathrooms_no,
+            "bedrooms": bedrooms_no,
+            "bathrooms": bathrooms_no,
             "size": self._safe_float(row.get("size") or row.get("size_value")),
+            "images": row.get("images") or [],
+            "ownership_proofs": row.get("ownership_proofs") or [],
             "image": image,
+            "listing_status": row.get("listing_status"),
+            "listing_expiry": row.get("listing_expiry"),
+            "is_visible": row.get("is_visible"),
+            "is_verified": row.get("is_verified"),
+            "is_available": row.get("is_available"),
+            "is_furnished": row.get("is_furnished"),
+            "is_sponsored": row.get("is_sponsored"),
+            "property_type": property_type,
+            "rate": row.get("rate"),
             "nearby_services": self._extract_services(description),
         }
 
@@ -613,40 +641,35 @@ class VectorStoreManager:
                 for raw_row in rows:
                     if not isinstance(raw_row, dict):
                         continue
-                    property_id = self._safe_int(raw_row.get("property_id") or raw_row.get("id"))
+                    catalog_row = self._catalog_row_from_external(raw_row)
+                    property_id = self._safe_int(catalog_row.get("property_id") or catalog_row.get("id"))
                     if not property_id:
                         continue
 
-                    title = str(raw_row.get("property_name") or raw_row.get("title") or f"Property {property_id}").strip()
-                    desc = str(raw_row.get("property_desc") or raw_row.get("description") or "").strip()
-                    loc = str(raw_row.get("location") or "").strip()
-                    ptype_raw = str(raw_row.get("property_type") or "").lower()
+                    title = str(catalog_row.get("property_name") or catalog_row.get("title") or f"Property {property_id}").strip()
+                    desc = str(catalog_row.get("property_desc") or catalog_row.get("description") or "").strip()
+                    loc = str(catalog_row.get("location") or "").strip()
+                    ptype_raw = str(catalog_row.get("property_type") or "").lower()
                     ptype = "Apartment"
                     if any(t in (title + desc).lower() for t in ["villa", "فيلا"]):
                         ptype = "Villa"
                     elif any(t in (title + desc).lower() for t in ["duplex", "دوبلكس"]):
                         ptype = "Duplex"
-                    listing_intent = self._infer_listing_intent_from_type(ptype_raw)
-                    raw_image = self._first_image(raw_row.get("images"))
-                    image = self._resolve_full_image_url(raw_image)
-                    url = str(raw_row.get("url") or f"{base_url}/property/{property_id}").strip()
+                    listing_intent = catalog_row.get("listing_intent") or self._infer_listing_intent_from_type(ptype_raw)
+                    url = str(catalog_row.get("url") or f"{base_url}/property/{property_id}").strip()
 
                     content = f"passage: Title: {title}\nLocation: {loc}\nType: {ptype}\nDescription: {desc}"
                     metadata = {
+                        **catalog_row,
                         "id": property_id,
                         "property_id": property_id,
                         "url": url,
                         "title": title,
+                        "property_name": title,
+                        "property_desc": desc,
                         "location": loc,
                         "type": ptype,
                         "listing_intent": listing_intent,
-                        "price": self._safe_float(raw_row.get("price_value") or raw_row.get("price_per_day")),
-                        "bedrooms": self._safe_float(raw_row.get("bedrooms_no") or raw_row.get("bedrooms")),
-                        "bathrooms": self._safe_float(raw_row.get("bathrooms_no") or raw_row.get("bathrooms")),
-                        "size": self._safe_float(raw_row.get("size") or raw_row.get("size_value")),
-                        "lat": self._safe_float(raw_row.get("latitude") or raw_row.get("lat")),
-                        "lon": self._safe_float(raw_row.get("longitude") or raw_row.get("lon")),
-                        "image": image,
                     }
                     docs.append(Document(page_content=content, metadata=metadata))
 
