@@ -85,20 +85,31 @@ def _external_base_url() -> str:
 
 
 def normalize_external_url(value: str) -> str:
+    """Normalizes URLs. For image/upload paths, returns just the relative path.
+    The frontend is responsible for building the full URL for images."""
     raw = str(value or "").strip()
-    base_url = _external_base_url()
     if not raw:
         return raw
 
+    # File resource prefixes — these should return path only (no base URL)
+    _resource_prefixes = ("uploads/", "static/")
+
     if raw.startswith(("http://", "https://")):
         parsed = urlparse(raw)
+        path = parsed.path.lstrip("/")
+        # If the path looks like a file resource (image/upload), return just the path
+        if any(path.startswith(prefix) for prefix in _resource_prefixes):
+            return path
+        # For localhost URLs, rewrite to external base
+        base_url = _external_base_url()
         if parsed.hostname in {"localhost", "127.0.0.1", "0.0.0.0"} and base_url:
             base = urlparse(base_url)
             return urlunparse(parsed._replace(scheme=base.scheme, netloc=base.netloc))
         return raw
 
-    if base_url and raw.startswith(("uploads/", "property/", "api/", "static/")):
-        return f"{base_url}/{raw.lstrip('/')}"
+    # Already a relative resource path — return as-is
+    if any(raw.startswith(prefix) for prefix in _resource_prefixes):
+        return raw
 
     return raw
 

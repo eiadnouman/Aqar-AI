@@ -100,9 +100,31 @@ class VectorStoreManager:
         self.property_lookup: Dict[str, Dict[str, Any]] = {}
         self.property_signature_lookup: Dict[str, Dict[str, Any]] = {}
         
-        self._load_property_catalog()
+        # Strategy: Always try live API sync first, fall back to disk index
+        api_synced = self._try_initial_api_sync()
         
-        self._load_index()
+        if not api_synced:
+            logger.warning("API sync failed on startup; falling back to disk index.")
+            self._load_property_catalog()
+            self._load_index()
+
+    def _try_initial_api_sync(self) -> bool:
+        """Attempts to build the FAISS index directly from the external API on startup.
+        Returns True if successful, False if API is unavailable (will fall back to disk)."""
+        base_url = (settings.external_api_base_url or "").rstrip("/")
+        api_key = (settings.internal_api_key or "").strip()
+        if not base_url or not api_key or not self.embeddings:
+            return False
+
+        try:
+            logger.info(f"Startup sync: fetching live data from {base_url}/internal/ai-sync...")
+            success = self.refresh_from_external()
+            if success:
+                logger.info("Startup sync: FAISS index built from live API data successfully.")
+            return success
+        except Exception as e:
+            logger.warning(f"Startup sync failed: {e}")
+            return False
 
     def _initialize_embeddings(self):
         """
@@ -589,21 +611,22 @@ class VectorStoreManager:
         return found
 
     def _resolve_full_image_url(self, image_path: str) -> str:
-        """Resolves a relative image path to a full URL using the external base URL."""
+        """Returns the image path as-is (relative path only, no full URL resolution).
+        The frontend is responsible for building the full URL."""
         raw = str(image_path or "").strip()
         if not raw:
             return ""
-        # Already a full URL
+        # If it's already a full URL, strip it down to just the path
         if raw.startswith(("http://", "https://")):
-            return raw
-        # Build full URL from base
-        base_url = (settings.property_public_base_url or settings.external_api_base_url or "").rstrip("/")
-        if base_url:
-            return f"{base_url}/{raw.lstrip('/')}"
-        return raw
+            from urllib.parse import urlparse
+            parsed = urlparse(raw)
+            return parsed.path.lstrip("/")
+        return raw.lstrip("/")
 
     def refresh_from_external(self) -> bool:
-        """Re-syncs property data from the external API and rebuilds the FAISS index in-memory."""
+        """Re-syncs property data from the external API and rebuilds the FAISS index in-memory.
+        Uses an atomic swap pattern: builds everything in temp variables first,
+        then swaps in one shot — so users never see empty/partial results."""
         base_url = (settings.external_api_base_url or "").rstrip("/")
         api_key = (settings.internal_api_key or "").strip()
         if not base_url or not api_key:
@@ -622,11 +645,22 @@ class VectorStoreManager:
                 logger.warning("External sync returned non-list payload during refresh.")
                 return False
 
-            # Reset catalogs
-            self.property_lookup.clear()
-            self.property_signature_lookup.clear()
-            self.available_locations.clear()
-            self.available_services.clear()
+            # ── Build everything in temporary variables ──
+            new_property_lookup: Dict[str, Dict[str, Any]] = {}
+            new_signature_lookup: Dict[str, Dict[str, Any]] = {}
+            new_locations: set = set()
+            new_services: Set[str] = set()
+
+            # Temporarily swap helpers to populate the new structures
+            old_lookup = self.property_lookup
+            old_sig = self.property_signature_lookup
+            old_locs = self.available_locations
+            old_svc = self.available_services
+
+            self.property_lookup = new_property_lookup
+            self.property_signature_lookup = new_signature_lookup
+            self.available_locations = new_locations
+            self.available_services = new_services
 
             for raw_row in rows:
                 if isinstance(raw_row, dict):
@@ -634,58 +668,72 @@ class VectorStoreManager:
 
             logger.info(f"Refreshed catalog with {len(rows)} properties from external API.")
 
-            # Rebuild FAISS index in-memory from fresh data
-            if self.embeddings:
-                import json as _json
-                docs: List[Document] = []
-                for raw_row in rows:
-                    if not isinstance(raw_row, dict):
-                        continue
-                    catalog_row = self._catalog_row_from_external(raw_row)
-                    property_id = self._safe_int(catalog_row.get("property_id") or catalog_row.get("id"))
-                    if not property_id:
-                        continue
-
-                    title = str(catalog_row.get("property_name") or catalog_row.get("title") or f"Property {property_id}").strip()
-                    desc = str(catalog_row.get("property_desc") or catalog_row.get("description") or "").strip()
-                    loc = str(catalog_row.get("location") or "").strip()
-                    ptype_raw = str(catalog_row.get("property_type") or "").lower()
-                    ptype = "Apartment"
-                    if any(t in (title + desc).lower() for t in ["villa", "فيلا"]):
-                        ptype = "Villa"
-                    elif any(t in (title + desc).lower() for t in ["duplex", "دوبلكس"]):
-                        ptype = "Duplex"
-                    listing_intent = catalog_row.get("listing_intent") or self._infer_listing_intent_from_type(ptype_raw)
-                    url = str(catalog_row.get("url") or f"{base_url}/property/{property_id}").strip()
-
-                    content = f"passage: Title: {title}\nLocation: {loc}\nType: {ptype}\nDescription: {desc}"
-                    metadata = {
-                        **catalog_row,
-                        "id": property_id,
-                        "property_id": property_id,
-                        "url": url,
-                        "title": title,
-                        "property_name": title,
-                        "property_desc": desc,
-                        "location": loc,
-                        "type": ptype,
-                        "listing_intent": listing_intent,
-                    }
-                    docs.append(Document(page_content=content, metadata=metadata))
-
-                if docs:
-                    self.vectorstore = FAISS.from_documents(docs, self.embeddings)
-                    self._extract_dynamic_locations()
-                    self._initialize_bm25()
-                    logger.info(f"FAISS index rebuilt in-memory with {len(docs)} documents.")
-                    return True
-                else:
-                    logger.warning("No documents to rebuild FAISS from.")
-                    return False
-            else:
+            # ── Rebuild FAISS index in temp variable ──
+            if not self.embeddings:
+                # Restore old state if we can't rebuild
+                self.property_lookup = old_lookup
+                self.property_signature_lookup = old_sig
+                self.available_locations = old_locs
+                self.available_services = old_svc
                 logger.warning("Embeddings unavailable; skipping FAISS rebuild during refresh.")
                 return False
+
+            docs: List[Document] = []
+            for raw_row in rows:
+                if not isinstance(raw_row, dict):
+                    continue
+                catalog_row = self._catalog_row_from_external(raw_row)
+                property_id = self._safe_int(catalog_row.get("property_id") or catalog_row.get("id"))
+                if not property_id:
+                    continue
+
+                title = str(catalog_row.get("property_name") or catalog_row.get("title") or f"Property {property_id}").strip()
+                desc = str(catalog_row.get("property_desc") or catalog_row.get("description") or "").strip()
+                loc = str(catalog_row.get("location") or "").strip()
+                ptype_raw = str(catalog_row.get("property_type") or "").lower()
+                ptype = "Apartment"
+                if any(t in (title + desc).lower() for t in ["villa", "فيلا"]):
+                    ptype = "Villa"
+                elif any(t in (title + desc).lower() for t in ["duplex", "دوبلكس"]):
+                    ptype = "Duplex"
+                listing_intent = catalog_row.get("listing_intent") or self._infer_listing_intent_from_type(ptype_raw)
+                url = str(catalog_row.get("url") or f"{base_url}/property/{property_id}").strip()
+
+                content = f"passage: Title: {title}\nLocation: {loc}\nType: {ptype}\nDescription: {desc}"
+                metadata = {
+                    **catalog_row,
+                    "id": property_id,
+                    "property_id": property_id,
+                    "url": url,
+                    "title": title,
+                    "property_name": title,
+                    "property_desc": desc,
+                    "location": loc,
+                    "type": ptype,
+                    "listing_intent": listing_intent,
+                }
+                docs.append(Document(page_content=content, metadata=metadata))
+
+            if not docs:
+                # Restore old state — don't leave user with nothing
+                self.property_lookup = old_lookup
+                self.property_signature_lookup = old_sig
+                self.available_locations = old_locs
+                self.available_services = old_svc
+                logger.warning("No documents to rebuild FAISS from; keeping old data.")
+                return False
+
+            # Build new FAISS index (this is the slow part — old index still serving)
+            new_vectorstore = FAISS.from_documents(docs, self.embeddings)
+
+            # ── Atomic swap: replace everything at once ──
+            self.vectorstore = new_vectorstore
+            self._extract_dynamic_locations()
+            self._initialize_bm25()
+            logger.info(f"FAISS index rebuilt in-memory with {len(docs)} documents.")
+            return True
 
         except Exception as e:
             logger.error(f"External data refresh failed: {e}")
             return False
+
