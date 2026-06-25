@@ -8,7 +8,7 @@ from app.core.config import settings
 
 class SearchFilters(BaseModel):
     """Rigorous Schema enforced natively by the LLM via Tool Calling."""
-    location: Optional[str] = Field(None, description="Match the user's location request to the EXACT English name in the 'Available Locations' list. Pay extremely close attention to numbers (e.g., 'التجمع الاول' maps to 'The 1st Settlement', 'التجمع الخامس' maps to 'The 5th Settlement'). If the exact settlement number isn't specified, use 'New Cairo'. If not found, output null.")
+    location: Optional[str] = Field(None, description="Match the user's location request. If it matches one of the 'Available Locations', use that exact name. If it is a location not in the list (e.g., 'بورسعيد' or 'Port Said'), extract/translate the location name and output it anyway so we know what specific location was requested.")
     min_price: Optional[float] = Field(None, description="Maximum price limitation extracted as a numeric value.")
     max_price: Optional[float] = Field(None, description="Maximum budget tolerance extracted dynamically.")
     min_bedrooms: Optional[int] = Field(None, description="Minimum logical bedrooms required.")

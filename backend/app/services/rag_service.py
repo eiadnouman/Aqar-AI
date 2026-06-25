@@ -195,10 +195,167 @@ class RAGService:
         final_docs = self._rank_recommendations(final_docs, filters)
         return filters, final_docs
 
+    def _get_region(self, location_str: str) -> str:
+        loc = str(location_str or "").lower()
+        if any(w in loc for w in ["alex", "اسكندرية", "إسكندرية", "سموحة", "smouha", "كامب شيزار", "caesar"]):
+            return "Alexandria"
+        if any(w in loc for w in ["zayed", "زايد", "اكتوبر", "october", "جيزة", "giza"]):
+            return "Zayed"
+        if any(w in loc for w in ["dahab", "دهب"]):
+            return "Dahab"
+        if any(w in loc for w in ["hurghada", "غردقة", "red sea", "البحر الاحمر"]):
+            return "Hurghada"
+        if any(w in loc for w in ["mansoura", "منصورة"]):
+            return "Mansoura"
+        if any(w in loc for w in ["cairo", "new cairo", "settlement", "قاهرة", "تجمع", "رحاب", "rehab", "مدينتي", "madinaty"]):
+            return "Cairo"
+        return "Other"
+
     def recommend_similar(self, description: str, k: Optional[int] = None) -> List[Document]:
-        """Provides direct semantic equivalents to a given property description."""
+        """Provides direct semantic equivalents to a given property description with heuristic ranking."""
         limit = self._result_limit(k, settings.recommendation_result_limit, 100)
-        return self.vector_store.similarity_search(description, k=limit)
+        
+        # 1. Try to find the exact target property in our database to get precise metadata
+        target_doc = None
+        for doc in self.vector_store.all_docs_list:
+            doc_desc = doc.metadata.get("property_desc") or doc.metadata.get("description") or ""
+            doc_title = doc.metadata.get("property_name") or doc.metadata.get("title") or ""
+            if (description.strip() and 
+                (description.strip() in doc_desc.strip() or 
+                 doc_desc.strip() in description.strip() or 
+                 doc_title.strip() in description.strip())):
+                target_doc = doc
+                break
+
+        # 2. Extract/infer filters from the description or target doc
+        target_id = None
+        target_loc = ""
+        target_type = ""
+        target_intent = ""
+        target_price = 0.0
+        target_beds = 0.0
+
+        if target_doc:
+            target_id = self._doc_property_id(target_doc)
+            target_loc = target_doc.metadata.get("location") or ""
+            target_type = target_doc.metadata.get("type") or ""
+            target_intent = self._doc_listing_intent(target_doc) or ""
+            target_price = self._safe_float(target_doc.metadata.get("price"))
+            target_beds = self._safe_float(target_doc.metadata.get("bedrooms"))
+        else:
+            try:
+                extracted = self.filter_engine.extract_filters(
+                    description,
+                    self.vector_store.available_locations,
+                    self.vector_store.available_services,
+                )
+                target_loc = extracted.get("location") or ""
+                target_type = extracted.get("property_type") or ""
+                target_intent = extracted.get("listing_intent") or ""
+                target_price = self._safe_float(extracted.get("max_price") or extracted.get("min_price"))
+                target_beds = self._safe_float(extracted.get("min_bedrooms"))
+            except Exception as e:
+                logger.warning(f"Failed to extract filters for recommendation: {e}")
+
+        # 3. Filter other docs to find candidates
+        target_region = self._get_region(target_loc)
+        target_type_clean = target_type.lower() if target_type else ""
+        target_intent_clean = target_intent.lower() if target_intent else ""
+
+        # Level-based candidate gathering
+        candidates = []
+        
+        # Level 1: same region + same type + same intent
+        for doc in self.vector_store.all_docs_list:
+            doc_id = self._doc_property_id(doc)
+            if target_id and doc_id == target_id:
+                continue
+            loc = doc.metadata.get("location", "")
+            doc_type = str(doc.metadata.get("type", "")).lower()
+            doc_intent = self._doc_listing_intent(doc) or ""
+            if (self._get_region(loc) == target_region and 
+                (target_type_clean in doc_type or doc_type in target_type_clean) and 
+                doc_intent == target_intent_clean):
+                candidates.append(doc)
+
+        # Level 2: same region + same intent
+        if len(candidates) < limit:
+            for doc in self.vector_store.all_docs_list:
+                doc_id = self._doc_property_id(doc)
+                if target_id and doc_id == target_id:
+                    continue
+                if doc in candidates:
+                    continue
+                loc = doc.metadata.get("location", "")
+                doc_intent = self._doc_listing_intent(doc) or ""
+                if self._get_region(loc) == target_region and doc_intent == target_intent_clean:
+                    candidates.append(doc)
+
+        # Level 3: same region
+        if len(candidates) < limit:
+            for doc in self.vector_store.all_docs_list:
+                doc_id = self._doc_property_id(doc)
+                if target_id and doc_id == target_id:
+                    continue
+                if doc in candidates:
+                    continue
+                loc = doc.metadata.get("location", "")
+                if self._get_region(loc) == target_region:
+                    candidates.append(doc)
+
+        # Level 4: global semantic backup
+        if len(candidates) < limit:
+            sim_docs = self.vector_store.similarity_search(description, k=limit + 10)
+            for doc in sim_docs:
+                doc_id = self._doc_property_id(doc)
+                if target_id and doc_id == target_id:
+                    continue
+                if doc in candidates:
+                    continue
+                candidates.append(doc)
+                if len(candidates) >= limit + 10:
+                    break
+
+        # 4. Score candidates with a heuristic
+        scored_candidates = []
+        for doc in candidates:
+            score = 0.0
+            loc = doc.metadata.get("location", "")
+            doc_type = str(doc.metadata.get("type", "")).lower()
+            doc_intent = self._doc_listing_intent(doc) or ""
+            doc_price = self._safe_float(doc.metadata.get("price"))
+
+            # Region match (weight: 100)
+            if self._get_region(loc) == target_region:
+                score += 100.0
+            
+            # Type match (weight: 50)
+            if target_type_clean and (target_type_clean in doc_type or doc_type in target_type_clean):
+                score += 50.0
+
+            # Intent match (weight: 30)
+            if target_intent_clean and target_intent_clean == doc_intent:
+                score += 30.0
+
+            # Price closeness (weight: 20)
+            if target_price > 0 and doc_price > 0:
+                price_diff = abs(doc_price - target_price) / target_price
+                price_score = max(0.0, 1.0 - price_diff)
+                score += price_score * 20.0
+
+            # Bedrooms closeness (weight: 10)
+            doc_beds = self._safe_float(doc.metadata.get("bedrooms"))
+            if target_beds > 0 and doc_beds > 0:
+                beds_diff = abs(doc_beds - target_beds)
+                beds_score = max(0.0, 1.0 - (beds_diff / 5.0))
+                score += beds_score * 10.0
+
+            scored_candidates.append((score, doc))
+
+        # Sort descending by score and return top K
+        scored_candidates.sort(key=lambda x: x[0], reverse=True)
+        final_recommendations = [doc for _, doc in scored_candidates[:limit]]
+        return final_recommendations
 
     def record_property_interaction(
         self,
@@ -1800,28 +1957,36 @@ class RAGService:
                     return search_status, []
 
             requested_loc = filters.get('location')
-            if requested_loc and not any(requested_loc.lower() in d.metadata.get('location', '').lower() for d in raw_docs):
-                 search_status = f"Alert: You requested ({requested_loc}) which is currently unavailable. Ask the user to review these alternatives in different locations."
-            else:
-                 search_status = "Alert: The exact specifications (rooms/price) are unavailable. Present these closest semantic alternatives instead."
-                 
-            # Priority Fallback: Attempt to hold the location boundary if possible
-            requested_loc = filters.get('location')
-            target_padding_loc = requested_loc
-            
-            if target_padding_loc:
+            if requested_loc:
+                # If a location was requested, we MUST stay within that location boundary.
+                # If we have no matches for that location, we return an empty list and alert the user.
+                target_padding_loc = requested_loc
                 filtered_docs = [d for d in raw_docs if target_padding_loc.lower() in d.metadata.get('location', '').lower()]
-            elif requested_intent:
-                filtered_docs = [d for d in raw_docs if self._doc_listing_intent(d) == requested_intent]
-            
-            # Absolute Fallback: Global semantic search
-            if not filtered_docs:
-                filtered_docs = [
-                    d for d in raw_docs
-                    if (not requested_intent) or self._doc_listing_intent(d) == requested_intent
-                ][:result_limit]
-            else:
+                if not filtered_docs:
+                    all_docs = getattr(self.vector_store, 'all_docs_list', []) or []
+                    filtered_docs = [d for d in all_docs if target_padding_loc.lower() in d.metadata.get('location', '').lower()]
+                
+                if not filtered_docs:
+                    search_status = f"Alert: You requested ({requested_loc}) which is currently unavailable."
+                    return search_status, []
+                
+                # If we found properties in that location but they didn't match other constraints,
+                # we show these as closest alternatives in the same location.
+                search_status = f"Alert: The exact specifications (rooms/price) in {requested_loc} are unavailable. Presenting these alternatives in the same location."
                 filtered_docs = filtered_docs[:result_limit]
+            else:
+                search_status = "Alert: The exact specifications (rooms/price) are unavailable. Present these closest semantic alternatives instead."
+                if requested_intent:
+                    filtered_docs = [d for d in raw_docs if self._doc_listing_intent(d) == requested_intent]
+                
+                # Absolute Fallback: Global semantic search
+                if not filtered_docs:
+                    filtered_docs = [
+                        d for d in raw_docs
+                        if (not requested_intent) or self._doc_listing_intent(d) == requested_intent
+                    ][:result_limit]
+                else:
+                    filtered_docs = filtered_docs[:result_limit]
                 
         else:
             filtered_docs = filtered_docs[:result_limit]
