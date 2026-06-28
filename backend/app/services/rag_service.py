@@ -3,7 +3,7 @@ import re
 import time
 from statistics import mean, median
 from threading import Lock
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Generator, List, Optional, Tuple
 from langchain_core.documents import Document
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
@@ -2244,6 +2244,303 @@ class RAGService:
         except Exception as e:
             logger.error(f"Conversational LLM Error: {e}")
             return "آسف، مش فاهم السؤال ده. ممكن توضح أكتر؟", []
+
+    # =====================================================================
+    # SSE Streaming Methods
+    # =====================================================================
+
+    def get_recommendation_stream(self, query: str, session_id: str = None) -> Generator[Dict[str, Any], None, None]:
+        """Streaming variant of get_recommendation. Yields SSE event dicts."""
+        # --- Non-LLM fast paths: yield full text instantly ---
+        if self._is_greeting(query):
+            response_text = self._build_greeting_response(query)
+            self._update_session_history(session_id, query, response_text)
+            yield {"event": "token", "data": {"text": response_text}}
+            yield {"event": "properties", "data": {"properties": []}}
+            yield {"event": "done", "data": {}}
+            return
+
+        if not self.vector_store.vectorstore:
+            msg = "System is initializing database, please hold on!"
+            yield {"event": "token", "data": {"text": msg}}
+            yield {"event": "properties", "data": {"properties": []}}
+            yield {"event": "done", "data": {}}
+            return
+
+        history: List = []
+        filters: Dict = {}
+
+        if session_id:
+            if session_id not in self.sessions:
+                self.sessions[session_id] = {}
+                self.chat_history[session_id] = []
+            history = self.chat_history[session_id]
+
+        new_filters = self.filter_engine.extract_filters(
+            query,
+            self.vector_store.available_locations,
+            self.vector_store.available_services,
+        )
+        if not isinstance(new_filters, dict):
+            new_filters = {}
+        new_filters = self._sanitize_filters(new_filters)
+
+        if session_id:
+            for k, v in new_filters.items():
+                if v is not None:
+                    self.sessions[session_id][k] = v
+            filters = self.sessions[session_id]
+        else:
+            filters = new_filters
+
+        # Stats / scoring / coverage — instant response
+        stats_intent = self._is_inventory_stats_intent(query, filters)
+        scoring_intent = self._is_scoring_explanation_intent(query)
+        coverage_intent = self._is_coverage_intent(query, filters)
+        if stats_intent or scoring_intent or coverage_intent:
+            response_parts: List[str] = []
+            if stats_intent:
+                stats_filters = new_filters if self._has_active_filters(new_filters) else filters
+                response_parts.append(self._build_inventory_stats_response(query=query, filters=stats_filters))
+            if coverage_intent:
+                coverage_filters = new_filters if self._has_active_filters(new_filters) else filters
+                response_parts.append(self._build_coverage_response(query=query, filters=coverage_filters))
+            if scoring_intent:
+                response_parts.append(self._build_scoring_explanation_response())
+            response_text = "\n\n".join([p.strip() for p in response_parts if p.strip()]).strip()
+            self._update_session_history(session_id, query, response_text)
+            yield {"event": "token", "data": {"text": response_text}}
+            yield {"event": "properties", "data": {"properties": []}}
+            yield {"event": "done", "data": {}}
+            return
+
+        # Analysis intent — instant response
+        if self._is_analysis_intent(query, filters):
+            analysis_result = self.analyze_market(query=query, explicit_filters=filters)
+            response_text = self._build_analysis_chat_response(analysis_result)
+            analysis_docs = self._collect_analysis_docs(analysis_result)
+            self._update_session_history(session_id, query, response_text)
+            yield {"event": "token", "data": {"text": response_text}}
+            yield {"event": "properties", "data": {"docs": analysis_docs}}
+            yield {"event": "done", "data": {}}
+            return
+
+        # Anti-hallucination guard
+        has_meaningful_filters = any(
+            v is not None and v != "" and v != [] and v != {}
+            for v in new_filters.values()
+        )
+        is_property_query = has_meaningful_filters or self._is_property_keyword_query(query)
+        if self._is_casual_chitchat(query):
+            is_property_query = False
+
+        if not is_property_query:
+            # Conversational LLM streaming
+            yield from self._generate_conversational_response_stream(query, history, session_id)
+            return
+
+        logger.info(f"Active Merged Filters applied: {filters}")
+
+        search_query = self._build_effective_search_query(query, filters)
+        raw_docs = self.vector_store.retrieve(search_query, k=settings.chat_retrieval_k)
+        filtered_docs = self._expand_strict_matches(raw_docs, filters)
+
+        search_status, final_docs = self._enforce_padding_logic(
+            search_query, filters, filtered_docs, raw_docs,
+            max_results=settings.chat_result_limit,
+        )
+        listing_intent = self._normalize_listing_intent(filters.get("listing_intent"))
+        if listing_intent and not final_docs:
+            response_text = self._build_listing_intent_unavailable_response(listing_intent, filters)
+            self._update_session_history(session_id, query, response_text)
+            yield {"event": "token", "data": {"text": response_text}}
+            yield {"event": "properties", "data": {"properties": []}}
+            yield {"event": "done", "data": {}}
+            return
+        final_docs = self._rank_recommendations(final_docs, filters)
+
+        is_arabic = bool(re.search(r"[\u0600-\u06FF]", query))
+        if settings.fast_property_responses and not is_arabic:
+            text, docs = self._generate_fast_property_response(query, search_status, final_docs, history)
+            yield {"event": "token", "data": {"text": text}}
+            yield {"event": "properties", "data": {"docs": docs}}
+            yield {"event": "done", "data": {}}
+            return
+
+        # Full LLM streaming path
+        yield from self._generate_response_stream(query, search_status, final_docs, history, session_id)
+
+    def _generate_response_stream(self, query, search_status, final_docs, history=None, session_id=None):
+        """Streaming variant of _generate_response. Yields SSE token events from LLM."""
+        if history is None:
+            history = []
+        try:
+            llm = self.llm_manager.get_llm()
+        except Exception as e:
+            logger.error(f"LLM initialization error: {e}")
+            msg = "آسف، الخدمة الذكية غير متاحة حاليًا. حاول مرة تانية بعد شوية."
+            yield {"event": "token", "data": {"text": msg}}
+            yield {"event": "properties", "data": {"properties": []}}
+            yield {"event": "done", "data": {}}
+            return
+
+        template = """
+        You are "AqarAI", a premium Real Estate AI Consultant.
+        
+        LANGUAGE RULE:
+        - Detect the language of [User Query].
+        - If the query is in Arabic (or Egyptian Arabic), respond in elegant, confident Egyptian Arabic dialect. Translate any English property names, descriptions, or locations to Egyptian Arabic.
+        - If the query is in English, respond in professional, friendly English. Translate any Arabic property names, descriptions, or locations to English.
+
+        [Search Status]: {search_status}
+        [Properties]: {context}
+        [User Query]: {question}
+
+        STRICT RULES:
+        1. Start with a warm, polished opening (e.g. "إليك أفضل النتائج لطلبك 🏠" or "لقيتلك اختيارات ممتازة 👇" in Arabic, or "Here are the best options for your request 🏠" in English).
+        2. Summarize the top 2-3 properties attractively — mention title, location, price, and key specs. Make sure they are translated to the detected language!
+        3. Recommend the best option with a brief reason (value, location, services).
+        4. NEVER ask the user questions. Just present what you have confidently.
+        5. NEVER show property IDs. Use titles and locations instead.
+        6. If services are available, mention them naturally.
+        7. End with exactly `[SHOW_CARDS]` on its own line.
+        
+        Your Response:
+        """
+
+        def property_context(idx: int, doc: Document) -> str:
+            meta = doc.metadata
+            distance = meta.get("distance_km")
+            distance_text = f"{distance} km" if isinstance(distance, (int, float)) else "N/A"
+            services = ", ".join(meta.get("nearby_services", [])[:5]) if meta.get("nearby_services") else "N/A"
+            score = meta.get("recommendation_score", "N/A")
+            return (
+                f"Property {idx}:\n"
+                f"Title: {meta.get('title', 'N/A')}\n"
+                f"Location: {meta.get('location', 'N/A')}\n"
+                f"Price: {meta.get('price', 'N/A')}\n"
+                f"Bedrooms: {meta.get('bedrooms', 'N/A')}\n"
+                f"DistanceKm: {distance_text}\n"
+                f"NearbyServices: {services}\n"
+                f"RecommendationScore: {score}\n"
+                f"{doc.page_content}"
+            )
+
+        docs_for_context = final_docs[:8]
+        context_str = "\n\n".join([property_context(i + 1, d) for i, d in enumerate(docs_for_context)])
+        template_text = template.format(
+            search_status=search_status,
+            context=context_str,
+            question=query
+        )
+
+        messages = [SystemMessage(content=template_text)]
+        messages.extend(history[-6:])
+        messages.append(HumanMessage(content=query))
+
+        try:
+            accumulated = ""
+            for chunk in llm.stream(messages):
+                token = chunk.content if hasattr(chunk, 'content') else str(chunk)
+                if token:
+                    accumulated += token
+                    yield {"event": "token", "data": {"text": token}}
+
+            # Post-processing: determine show_cards from accumulated response
+            show_cards = "[SHOW_CARDS]" in accumulated or "SHOW_CARDS" in accumulated
+            content_clean = accumulated.replace("[SHOW_CARDS]", "").replace("SHOW_CARDS", "").strip()
+
+            if final_docs and ("شقة" in query or "فيلا" in query or "عقار" in query or "تجمع" in query or "زايد" in query or "apartment" in query.lower() or "villa" in query.lower()):
+                show_cards = True
+
+            final_docs_to_return = final_docs if show_cards else []
+
+            # Update history
+            history.append(HumanMessage(content=query))
+            history.append(AIMessage(content=content_clean))
+            self._update_session_history(session_id, query, content_clean, skip_append=True)
+
+            yield {"event": "properties", "data": {"docs": final_docs_to_return}}
+            yield {"event": "done", "data": {}}
+        except Exception as e:
+            logger.error(f"LLM Streaming Error: {e}")
+            msg = "Apologies, the server is currently experiencing high load. Please try again shortly."
+            yield {"event": "token", "data": {"text": msg}}
+            yield {"event": "properties", "data": {"properties": []}}
+            yield {"event": "done", "data": {}}
+
+    def _generate_conversational_response_stream(self, query, history=None, session_id=None):
+        """Streaming variant of _generate_conversational_response."""
+        if history is None:
+            history = []
+        try:
+            llm = self.llm_manager.get_llm()
+        except Exception as e:
+            logger.error(f"LLM initialization error: {e}")
+            msg = "أقدر أساعدك، لكن مفاتيح نماذج الذكاء مش متوفرة حاليًا."
+            yield {"event": "token", "data": {"text": msg}}
+            yield {"event": "properties", "data": {"properties": []}}
+            yield {"event": "done", "data": {}}
+            return
+
+        template = """
+        You are "AqarAI", a friendly and professional Real Estate AI Consultant.
+        
+        LANGUAGE RULE:
+        - Detect the language of the user's message.
+        - If the message is in Arabic (or Egyptian Arabic), speak in warm, natural Egyptian Arabic dialect.
+        - If the message is in English, speak in professional, warm English.
+        
+        STRICT RULES:
+        1. You ONLY help with real estate topics. If the question is NOT about properties, politely redirect in the detected language.
+        2. NEVER mention or list any property data. You have NO properties to show in this context.
+        3. NEVER invent or fabricate property listings.
+        4. If the user wants to search for properties, guide them to specify: المنطقة (location), الميزانية (budget), عدد الغرف (rooms) in the detected language.
+        5. Keep responses short (2-3 sentences max) and friendly.
+        6. Do NOT output [SHOW_CARDS] or any system tags.
+        
+        Chat History:
+        {history}
+        
+        User: {question}
+        
+        Response:
+        """
+
+        history_str = "\n".join([f"User: {h.content}\nAI: {a.content}" for h, a in zip(history[::2], history[1::2])])
+        template_text = template.format(history=history_str, question=query)
+
+        messages = [SystemMessage(content=template_text)]
+
+        try:
+            accumulated = ""
+            for chunk in llm.stream(messages):
+                token = chunk.content if hasattr(chunk, 'content') else str(chunk)
+                if token:
+                    accumulated += token
+                    yield {"event": "token", "data": {"text": token}}
+
+            content_clean = accumulated.replace("[SHOW_CARDS]", "").replace("SHOW_CARDS", "").strip()
+            self._update_session_history(session_id, query, content_clean)
+            yield {"event": "properties", "data": {"properties": []}}
+            yield {"event": "done", "data": {}}
+        except Exception as e:
+            logger.error(f"Conversational Streaming LLM Error: {e}")
+            msg = "آسف، مش فاهم السؤال ده. ممكن توضح أكتر؟"
+            yield {"event": "token", "data": {"text": msg}}
+            yield {"event": "properties", "data": {"properties": []}}
+            yield {"event": "done", "data": {}}
+
+    def _update_session_history(self, session_id: Optional[str], query: str, response: str, skip_append: bool = False):
+        """Helper to update session chat history."""
+        if not session_id:
+            return
+        if session_id not in self.sessions:
+            self.sessions[session_id] = {}
+            self.chat_history[session_id] = []
+        if not skip_append:
+            self.chat_history[session_id].append(HumanMessage(content=query))
+            self.chat_history[session_id].append(AIMessage(content=response))
 
 
 def get_rag_service() -> RAGService:

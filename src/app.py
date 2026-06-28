@@ -213,6 +213,57 @@ def chat_with_api(message: str, session_id: str = "default_session"):
         return {"answer": "معلش السيرفر مش شغال دلوقتي، تأكد إن الباك-إند شغال.", "properties": []}
 
 
+def stream_chat_with_api(message: str, session_id: str = "default_session"):
+    """Calls the /chat/stream SSE endpoint. Returns a generator of text tokens and
+    a container that will hold the properties once the stream finishes."""
+    import json as _json
+
+    result = {"properties": [], "_failed": False}
+
+    def token_generator():
+        try:
+            resp = requests.post(
+                f"{API_BASE_URL}/chat/stream",
+                json={"message": message, "session_id": session_id},
+                stream=True,
+                timeout=120,
+            )
+            resp.raise_for_status()
+
+            event_type = None
+            for raw_line in resp.iter_lines(decode_unicode=True):
+                if raw_line is None:
+                    continue
+                line = raw_line.strip()
+                if not line:
+                    event_type = None
+                    continue
+                if line.startswith("event:"):
+                    event_type = line[len("event:"):].strip()
+                    continue
+                if line.startswith("data:"):
+                    payload = line[len("data:"):].strip()
+                    try:
+                        data = _json.loads(payload)
+                    except _json.JSONDecodeError:
+                        data = {}
+
+                    if event_type == "token":
+                        text = data.get("text", "")
+                        # Strip any SHOW_CARDS tags before displaying
+                        text = text.replace("[SHOW_CARDS]", "").replace("SHOW_CARDS", "")
+                        if text:
+                            yield text
+                    elif event_type == "properties":
+                        result["properties"] = data.get("properties", [])
+                    # event_type == "done" -> stream finished
+        except Exception as e:
+            logger.error(f"SSE stream error: {e}")
+            result["_failed"] = True
+
+    return token_generator, result
+
+
 def track_property_interest(session_id: str, property_id: int):
     try:
         response = requests.post(
@@ -412,39 +463,40 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Generate Response
+        # Generate Response with Streaming
         with st.chat_message("assistant"):
-            with st.spinner("جاري التحليل..."):
-                # Hit API
+            token_gen, stream_result = stream_chat_with_api(prompt, session_id=st.session_state.session_id)
+            response_text = st.write_stream(token_gen())
+
+            # Fallback to non-streaming if SSE failed
+            if stream_result.get("_failed"):
                 api_response = chat_with_api(prompt, session_id=st.session_state.session_id)
-                
                 response_text = api_response.get("answer", "")
                 related_docs = api_response.get("properties", [])
-                
-                # B. Render cards if backend returned results.
-                show_cards = bool(related_docs)
-                if "[SHOW_CARDS]" in response_text:
-                    show_cards = True
-                    response_text = response_text.replace("[SHOW_CARDS]", "").strip()
-                
                 st.markdown(response_text)
-                
-                # C. Conditionally Show Cards
-                prop_data = None
-                if show_cards and related_docs:
-                    st.markdown("---")
-                    # Grid Layout for current response
-                    cols = st.columns(3)
-                    for i, doc in enumerate(related_docs):
-                        with cols[i % 3]:
-                            render_property_card(doc, key_suffix=f"current_{len(st.session_state.messages)}_{i}")
-                    prop_data = related_docs
-                    
-                # Save context
-                payload = {"role": "assistant", "content": response_text}
-                if prop_data:
-                    payload["properties"] = prop_data
-                st.session_state.messages.append(payload)
+            else:
+                if not isinstance(response_text, str):
+                    response_text = str(response_text or "")
+                related_docs = stream_result.get("properties", [])
+
+            # Clean up any residual SHOW_CARDS tags
+            response_text = response_text.replace("[SHOW_CARDS]", "").replace("SHOW_CARDS", "").strip()
+
+            # Show property cards if returned
+            prop_data = None
+            if related_docs:
+                st.markdown("---")
+                cols = st.columns(3)
+                for i, doc in enumerate(related_docs):
+                    with cols[i % 3]:
+                        render_property_card(doc, key_suffix=f"current_{len(st.session_state.messages)}_{i}")
+                prop_data = related_docs
+
+            # Save context
+            payload = {"role": "assistant", "content": response_text}
+            if prop_data:
+                payload["properties"] = prop_data
+            st.session_state.messages.append(payload)
 
 if __name__ == "__main__":
     main()
