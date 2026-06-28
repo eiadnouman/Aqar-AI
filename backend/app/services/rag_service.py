@@ -2163,7 +2163,10 @@ class RAGService:
                 f"{doc.page_content}"
             )
 
-        context_str = "\n\n".join([property_context(i + 1, d) for i, d in enumerate(final_docs)])
+        # Limit docs in LLM context to avoid exhausting the context window
+        # (full list is still returned as property cards)
+        docs_for_context = final_docs[:8]
+        context_str = "\n\n".join([property_context(i + 1, d) for i, d in enumerate(docs_for_context)])
         template_text = template.format(
             search_status=search_status,
             context=context_str,

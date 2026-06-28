@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     search_result_limit: int = 100
     recommendation_result_limit: int = 30
     fast_response_summary_items: int = 5
-    llm_max_tokens: int = 700
+    llm_max_tokens: int = 2048
     
     # Application Context
     project_name: str = "Aqar-AI Intelligence API"
